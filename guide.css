@@ -1,0 +1,145 @@
+:root {
+  --bg: #0a0710;
+  --panel: #150f1e;
+  --panel2: #1d1528;
+  --line: #372b47;
+  --text: #ece6dd;        /* bone */
+  --dim: #9b90ad;
+  --violet: #8d4fc4;
+  --violet-soft: rgba(141, 79, 196, .18);
+  --acid: #6ee7a0;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  color: var(--text);
+  background:
+    radial-gradient(900px 400px at 80% 0%, rgba(110,231,160,.10), transparent 60%),
+    radial-gradient(900px 500px at 10% 0%, rgba(141,79,196,.18), transparent 60%),
+    var(--bg);
+  font: 16px/1.7 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+a { color: var(--acid); }
+
+/* -------------------------------------------------------------- the hero */
+.hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--line); }
+.heroart {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: 70% 30%; opacity: .55;
+}
+.hero::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(100deg, rgba(10,7,16,.97) 22%, rgba(10,7,16,.55) 55%, rgba(10,7,16,.25));
+}
+.herotext { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 4.5rem 1.4rem 3.5rem; }
+.eyebrow {
+  margin: 0 0 .2rem; color: var(--acid);
+  font: 600 .8rem/1 var(--mono); text-transform: uppercase; letter-spacing: .22em;
+  text-shadow: 0 0 14px rgba(110,231,160,.5);
+}
+.herotext h1 {
+  margin: 0 0 .5rem; font-size: clamp(2rem, 5.2vw, 3.3rem); line-height: 1.05; letter-spacing: -.01em;
+}
+.herotext h1 span { color: var(--violet); text-shadow: 0 0 26px rgba(141,79,196,.6); }
+.sub { margin: 0 0 1.4rem; max-width: 34rem; color: var(--text); opacity: .9; }
+.herobuttons { display: flex; gap: .6rem; flex-wrap: wrap; }
+.cta {
+  display: inline-block; padding: .7rem 1.1rem; border-radius: 10px;
+  background: var(--violet); color: #fff; text-decoration: none; font-weight: 600;
+  border: 1px solid var(--violet); box-shadow: 0 0 22px rgba(141,79,196,.45);
+}
+.cta.ghost { background: rgba(10,7,16,.6); color: var(--text); border-color: var(--line); box-shadow: none; }
+.cta:hover { filter: brightness(1.12); }
+
+/* ------------------------------------------------------------- the guide */
+main { max-width: 860px; margin: 0 auto; padding: 2.4rem 1.4rem 4rem; }
+.guide h1 { display: none; }              /* the hero carries the title */
+.guide-intro {
+  background: var(--panel); border: 1px solid var(--line);
+  border-left: 4px solid var(--violet); border-radius: 0 10px 10px 0;
+  padding: 1.1rem 1.3rem; margin: 0 0 1.6rem;
+}
+.guide-intro p { margin: 0 0 .8rem; }
+.guide-intro p:last-child { margin-bottom: 0; }
+
+.guide-toc { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 2.4rem; }
+.guide-toc a {
+  padding: .35rem .75rem; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--panel); color: var(--dim); text-decoration: none;
+  font: 600 .8rem/1.5 var(--mono); text-transform: uppercase; letter-spacing: .04em;
+}
+.guide-toc a:hover { color: var(--text); border-color: var(--acid); }
+
+.guide-step { margin: 0 0 2.6rem; padding-top: 1.4rem; border-top: 1px solid var(--line); scroll-margin-top: 1rem; }
+.guide-step h2 {
+  display: flex; align-items: center; gap: .7rem; flex-wrap: wrap;
+  font-size: 1.6rem; margin: 0 0 .7rem; letter-spacing: -.01em;
+}
+.guide-step h2 .step {
+  background: var(--violet); color: #fff; padding: .15rem .65rem; border-radius: 6px;
+  font-size: 1.05rem; box-shadow: 0 0 16px rgba(141,79,196,.45);
+}
+.guide-step h2 .sub { color: var(--acid); font-size: 1.05rem; margin: 0; }
+.lead { font-size: 1.05rem; }
+h3.rule-name {
+  font: 700 1rem/1.4 var(--mono); text-transform: uppercase; letter-spacing: .06em;
+  color: var(--acid); margin: 1.8rem 0 .3rem;
+}
+
+ul.avoid { list-style: none; padding: 0; margin: .7rem 0 0; }
+ul.avoid li {
+  position: relative; padding: .6rem .9rem .6rem 2.5rem; margin-bottom: .45rem;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+}
+ul.avoid li::before {
+  content: "✕"; position: absolute; left: .9rem; top: .6rem; color: #ff5d7a; font-weight: 700;
+}
+
+.qgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); gap: .7rem; }
+.qcard {
+  background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--violet);
+  border-radius: 8px; padding: .85rem 1rem;
+}
+.qcard h3 {
+  margin: 0 0 .45rem; color: var(--acid);
+  font: 700 .9rem/1.4 var(--mono); text-transform: uppercase; letter-spacing: .05em;
+}
+.qcard ul { margin: 0; padding-left: 1.1rem; font-size: .96rem; line-height: 1.6; }
+.qcard li { margin-bottom: .3rem; }
+
+.tpl { position: relative; margin: .7rem 0 1.5rem; }
+.tpl pre {
+  margin: 0; padding: 1rem 1.1rem 1rem; padding-right: 5.5rem;
+  background: #06040a; border: 1px solid var(--line); border-left: 3px solid var(--acid);
+  border-radius: 8px; color: #dcd6f0;
+  font: .88rem/1.6 var(--mono); white-space: pre-wrap; word-break: break-word;
+}
+.tpl .copy {
+  position: absolute; top: .55rem; right: .55rem;
+  padding: .3rem .7rem; border-radius: 6px; cursor: pointer;
+  background: var(--panel2); border: 1px solid var(--line); color: var(--dim);
+  font: 600 .78rem/1 var(--mono); text-transform: uppercase;
+}
+.tpl .copy:hover { color: #05210f; background: var(--acid); border-color: var(--acid); }
+
+.convo { display: flex; flex-direction: column; gap: .5rem; margin: 1.1rem 0 1.3rem; }
+.convo p { margin: 0; padding: .65rem 1rem; max-width: 86%; border: 1px solid var(--line); border-radius: 12px; }
+.convo .q { align-self: flex-start; background: var(--panel2); color: var(--dim); font-style: italic; border-bottom-left-radius: 3px; }
+.convo .a { align-self: flex-end; background: var(--violet-soft); border-color: var(--violet); border-bottom-right-radius: 3px; }
+
+/* -------------------------------------------------------------- the foot */
+.sitefoot {
+  display: flex; align-items: center; gap: .9rem; justify-content: center;
+  border-top: 1px solid var(--line); padding: 1.6rem 1.4rem 2.4rem; color: var(--dim);
+}
+.sitefoot img { width: 44px; height: 44px; border-radius: 8px; border: 1px solid var(--line); object-fit: cover; }
+.sitefoot p { margin: 0; font-size: .92rem; }
+
+@media (max-width: 640px) {
+  .herotext { padding: 3rem 1rem 2.4rem; }
+  main { padding: 1.8rem 1rem 3rem; }
+  .convo p { max-width: 100%; }
+}

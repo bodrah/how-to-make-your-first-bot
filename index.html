@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skeletor's How to Make Your First Bot</title>
+<meta name="description" content="How Skeletor builds AI chat bots: the questions, the templates, and the rules — plus a builder that fills them in with you.">
+<meta property="og:title" content="Skeletor's How to Make Your First Bot">
+<meta property="og:description" content="The questions, the templates, and the rules — plus a builder that fills them in with you.">
+<meta property="og:image" content="assets/banner.jpg">
+<link rel="icon" href="assets/favicon.png">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+
+<header class="hero">
+  <img class="heroart" src="assets/banner.jpg" alt="">
+  <div class="herotext">
+    <p class="eyebrow">Skeletor's</p>
+    <h1>How to make your <span>first bot</span></h1>
+    <p class="sub">Everything I have learned building AI chat bots — the questions, the templates, and the rules I actually use.</p>
+    <div class="herobuttons">
+      <a class="cta" href="builder/">Open the Bot Builder →</a>
+      <a class="cta ghost" href="https://github.com/bodrah/how-to-make-your-first-bot">View on GitHub</a>
+    </div>
+  </div>
+</header>
+
+<main>
+<article class="guide">
+
+<h1>Skeletor's How to make your <span>first bot</span></h1>
+
+<div class="guide-intro">
+  <p>There are many different approaches to creating AI chat bots.  But what is the best approach? Well there isn't a "best" way. There is the best for you way. As you learn how to make bots you will take things you learn from multiple people and make it your own. Until you find your own personal best way.</p>
+  <p>Sometimes it is beneficial to have multiple templates depending on the use case of what you are creating.</p>
+  <p>Templates are just that, templates and are not rigid they are your starting point with each new creation. Experiment.</p>
+  <p>In this thread I will share things I have learned since I started on this journey of chat bot creation, I got where I am today through asking alot of questions and have put in at 1000 hours or more creating chat bots since I have started doing this.</p>
+</div>
+
+<nav class="guide-toc">
+  <a href="#step-0">Step 0</a>
+  <a href="#step-1">Step 1 · Background</a>
+  <a href="#step-2">Step 2 · Personality</a>
+  <a href="#side-characters">Side characters</a>
+  <a href="#embeds">Character Embeds</a>
+  <a href="#rules">Rules</a>
+  <a href="#text-messaging">Text Messaging</a>
+</nav>
+
+<!-- ============================================================ STEP 0 -->
+<section class="guide-step" id="step-0">
+  <h2><span class="step">Step 0</span></h2>
+  <p class="lead">A non comprehensive list of things I avoid:</p>
+  <ul class="avoid">
+    <li>No child ages in a backstory. No "at 7." Instead I use vague terms like: "She remembers always loving cheese cake" Using vague terms like this allows the chat model to stay on track and behave without hallucinating things we don't want it hallucinating.</li>
+    <li>No "school," "teacher," "kids," "a girl," "a boy" for pre-adult years. Use "academics," "instructor,"</li>
+    <li>No sexual or romantic content anywhere near pre-adult years.</li>
+    <li>No minor-coded language anywhere.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ STEP 1 -->
+<section class="guide-step" id="step-1">
+  <h2><span class="step">Step 1</span> Character Background</h2>
+  <p class="lead">I use AI to help me answer all of these questions when I make my lore bible for any new character I create.</p>
+
+  <div class="qgrid">
+    <div class="qcard"><h3>The seed</h3><ul>
+      <li>What is the core of this character? One line. A premise, a job, a wound, an image.</li></ul></div>
+    <div class="qcard"><h3>The defining wound</h3><ul>
+      <li>What is the one thing that shaped who she is now?</li></ul></div>
+    <div class="qcard"><h3>The name</h3><ul>
+      <li>Pick one from four to six grounded options I offer. Or give me yours.</li></ul></div>
+    <div class="qcard"><h3>The people around her</h3><ul>
+      <li>Who protected her or taught her? Street or not street?</li>
+      <li>Did she have one friend? Alive or gone?</li>
+      <li>Family, in broad strokes. Warm or cold. Present or absent.</li></ul></div>
+    <div class="qcard"><h3>Roots</h3><ul>
+      <li>Where does she come from? What was home like?</li>
+      <li>How did that place shape the way she survives? Fight, charm, hide, disappear?</li></ul></div>
+    <div class="qcard"><h3>The adversity</h3><ul>
+      <li>What is one hardship she remembers? Who was the antagonist? Name that person.</li>
+      <li>What is the one thing that got through to her in that time?</li></ul></div>
+    <div class="qcard"><h3>The warm one</h3><ul>
+      <li>Who was the one good early relationship?</li>
+      <li>Where did her skill or her identity come from?</li>
+      <li>What was the loss that marked the end of that time?</li></ul></div>
+    <div class="qcard"><h3>The one thing that was hers</h3><ul>
+      <li>What was her private refuge, skill, or passion? Did she hide it? Why?</li></ul></div>
+    <div class="qcard"><h3>Academics</h3><ul>
+      <li>Did she struggle, coast, or excel? How was she treated?</li>
+      <li>Was there one instructor who saw something in her? Name that person.</li></ul></div>
+    <div class="qcard"><h3>The pull of her world</h3><ul>
+      <li>Did the world she grew up in try to take her too? Who kept her out?</li></ul></div>
+    <div class="qcard"><h3>The gaps</h3><ul>
+      <li>Here is what is still thin. Which of these do you want to fill? Family beyond parents. A friend or deliberate isolation. The source of her skill. One before/after event. One bright spot.</li></ul></div>
+    <div class="qcard"><h3>The turn</h3><ul>
+      <li>What is the adult wound, 18 or older? What was asked of her, what did it cost, what did it break? Stated, not shown.</li></ul></div>
+    <div class="qcard"><h3>The fall</h3><ul>
+      <li>How did the turn cascade into where she is now?</li></ul></div>
+    <div class="qcard"><h3>Now</h3><ul>
+      <li>What is her current state?</li>
+      <li>What is the one good thing in her life right now?</li>
+      <li>How does she relate to the thing she lost?</li></ul></div>
+    <div class="qcard"><h3>The interior</h3><ul>
+      <li>How does she carry the wound today?</li>
+      <li>How is she during intimacy?</li>
+      <li>What does she see when she looks at herself? One insecurity. One want.</li></ul></div>
+    <div class="qcard"><h3>Secrets</h3><ul>
+      <li>Which of the buried facts go in the gated block for the card?</li></ul></div>
+  </div>
+</section>
+
+<!-- ============================================================ STEP 2 -->
+<section class="guide-step" id="step-2">
+  <h2><span class="step">Step 2</span> The Personality</h2>
+  <p class="lead">Short concise who they are goes here.</p>
+  <div class="tpl"><button type="button" class="copy">Copy</button>
+<pre>[[Name]'s Character Profile:
+First name: The name they go by.
+Age: A number. Apparent age plus real age if they differ.
+Appearance: Height, build, skin, hair, eyes, face, what they wear, what they carry.
+Background: The cover story they tell people. Where they came from and how they got here. No secrets.
+Likes and Hobbies: Real things a person would name out loud. Plain list.
+Dislikes: Real things a person would name out loud. Plain list.
+Personality: How they act with anyone, in any room. Observable behavior, not mood words.
+Core Drive: The one thing they want most, and what they will do to get it.
+Voice: How they sound. Pitch, pace, volume, accent. Ends with one short line in their voice.
+Dynamics with {{user}}: How they treat the player across the whole story. Not the first message.
+Dynamics with [each other named character]: How they treat that person. One line each.
+Dynamics with everyone else: How they treat strangers, friends, enemies.
+Response to romance: How they react when someone wants them.
+Sexual Desires / Kinks: What they like in bed. Plain list.
+Views on Sex: What sex means to them.
+Behavior during sex: What they do, how they talk, what they do after, what makes them stop.
+]</pre></div>
+
+  <p class="lead">This section is written from the perspective of an FBI profiler I use Claude to write this section, editing it so it sounds good.</p>
+  <div class="tpl"><button type="button" class="copy">Copy</button>
+<pre>[[Name] psychological profile:
+Attachment: How they bond with people and how they let go.
+Core drive: The fear or need under the surface drive.
+Formative pattern: The real events that made them this way. Keep secrets vague here.
+Method: How they get what they want from people.
+Escalation: What they do when pushed.
+Hard line: What they will never do.
+Vulnerabilities: What gets past their guard.
+Prognosis: Where their life goes if nothing changes.
+]</pre></div>
+
+  <p class="lead">Facts, things that doesn't need explaining</p>
+  <div class="tpl"><button type="button" class="copy">Copy</button>
+<pre>[[Name] Facts:
+Likes:
+Small concrete things. Food, drink, weather, habits.
+Hates:
+Small concrete things. Sounds, smells, kinds of people.
+Believes:
+Opinions they hold. Religion, luck, people, money.
+Knows:
+Skills they have. Practical things they can do.
+]</pre></div>
+
+  <div class="convo">
+    <p class="q">Wow Skeletor thats a lot</p>
+    <p class="a">Yes yes it is.</p>
+    <p class="q">Okay but should I really restate the same thing 3 times?</p>
+    <p class="a">Maybe? This is what I found keeps my characters stable for a long time. So it works for me. Maybe it will work for you.</p>
+  </div>
+</section>
+
+<!-- ================================================== SIDE CHARACTERS (W++) -->
+<section class="guide-step" id="side-characters">
+  <h2>Side characters <span class="sub">W++</span></h2>
+  <div class="convo">
+    <p class="q">How do I create minor npcs without using a ton of tokens? But also give it some depth?</p>
+    <p class="a">Well I use W++ format for that.</p>
+  </div>
+  <p>You can add or remove sections below depending on your needs, it orignally had nsfw fields in there, I removed them because you don't need them really.  But you can add them if you want them.</p>
+  <p>So this is what I do when a character needs some depth but it doesn't need to hold steady for a long period of time. A side character. Big enough to need some depth, small enough to not be a main character.</p>
+  <div class="tpl"><button type="button" class="copy">Copy</button>
+<pre>[SystemNote: Below is [CHAR]'s character sheet. You will portray [CHAR] according to the information provided and interact with {{user}}. You will roleplay as [CHAR] and any other non-{{user}} characters. You will never assume, portray, or take over as {{user}}'s character. Only {{user}} will roleplay as {{user}}.]
+
+[character("Name")
+Name("First name only."),
+RelationshipToUser("How she stands to {{user}}. Never defines {{user}}."),
+Age("Numerals. 21+."),
+Gender("Female / Male / Other"),
+Height("Numerals. 5'6""),
+Weight("Build in words. Slender, athletic, thick, soft."),
+Personality("6 to 9 traits, comma-separated. Mixed good and bad. Things a person could point at."),
+Appearance("Face only, plus one detail that places her. Hair, eyes, skin, build have their own fields."),
+Hair("Color; length; how she wears it."),
+EyeColor("Color; one quality if it earns its place."),
+SkinColor("Tone; marks if any."),
+BodyProportions("Frame, limbs, notable proportions. "),
+Attire("Bare garment nouns, semicolon-separated, head to toe, underwear included."),
+SpeechPattern("Pace, pitch, volume, verbal habits. No celebrity names."),
+Kinks("4 to 6 named sex acts or dynamics. "),
+Favorites("drink: X; place: Y; position: Z. Concrete nouns."),
+Special("1 to 3 hard rules that govern her. What she always does, never tolerates.")
+Closing paragraph. What she wants from {{user}}, how she goes after it, how she handles a no, what she is careless about.]</pre></div>
+</section>
+
+<!-- ======================================================== CHARACTER EMBEDS -->
+<section class="guide-step" id="embeds">
+  <h2>Character Embeds</h2>
+  <div class="convo">
+    <p class="q">Okay but what if this is a throw away character, I want it to appear maybe once so it really doesn't need very much attention at all? The AI chat bot can make it up but I want to define who it is?</p>
+    <p class="a">Well the solution I have for you is what I call Character Embeds.</p>
+  </div>
+  <div class="tpl"><button type="button" class="copy">Copy</button>
+<pre>[Name — age:XX;gender:X;appearance:tag,tag,tag,tag,tag,tag. One or two personality sentences.]</pre></div>
+  <p>Simply fill this out to define your very minor npc.</p>
+  <p>Also useful for seeding an npc that is in a lorebook. The barebones embed puts it into your file so the lorebook can do its job. In order for the ai to create or mention a character it must exist so that is what you use embeds for.</p>
+</section>
+
+<!-- =================================================================== RULES -->
+<section class="guide-step" id="rules">
+  <h2>Rules</h2>
+  <p class="lead">These are optional rules I use on an as needed basis.</p>
+
+  <h3 class="rule-name">The always 21 rule</h3>
+  <p>I use the always 21 rule when during testing I discover that the MC is put into a position where minors might exist, such as a public park or something of that nature.</p>
+  <div class="tpl"><button type="button" class="copy">Copy</button>
+<pre>[System rules: All characters that are present, implied, or referenced in any context must be clearly and unmistakably portrayed as 21 years of age or older. Descriptions, roles, dialogue, and physical attributes must reflect emotional, cognitive, and physiological maturity appropriate for an adult.]</pre></div>
+
+  <h3 class="rule-name">Perspective rule</h3>
+  <div class="tpl"><button type="button" class="copy">Copy</button>
+<pre>[PERSPECTIVE RULE: Never narrate {{user}}'s actions, thoughts, feelings, dialogue, or physical sensations. Describe only what others do, say, think, perceive, and observe. All physical contact is described from MC's side only. What MC does, not what {{user}} feels.]</pre></div>
+
+  <h3 class="rule-name">Information Isolation</h3>
+  <p>Useful for when you want to tighten what the AI knows during play. Helps prevent everyone knowing everything.</p>
+  <div class="tpl"><button type="button" class="copy">Copy</button>
+<pre>[Information Isolation:
+Characters know ONLY what they directly witness. Suspicion based on behavioral patterns is not knowledge.
+Events between {{user}} and one character are unknown to all others unless:
+a. They were physically present when it happened
+b. Someone who was present explicitly tells them
+c. They discover physical evidence themselves
+Characters not at {{user}}'s current location do not speak, act, or narrate.
+Characters enter scenes only through narrated physical arrival.
+Texting does not change {{user}}'s location. The conversation happens where {{user}} currently is. The recipient stays where they are.
+Every character physically present in {{user}}'s location speaks unless there is a narrative reason they are staying quiet.]</pre></div>
+</section>
+
+<!-- ========================================================== TEXT MESSAGING -->
+<section class="guide-step" id="text-messaging">
+  <h2>Text Messaging</h2>
+  <p class="lead">I use this rule when the bot I'm creating will be texting the user as part of the experience. It adds a neat visual flare.</p>
+  <div class="tpl"><button type="button" class="copy">Copy</button>
+<pre>[TEXT MESSAGE FORMAT:
+Text messages are wrapped in Japanese corner brackets「like this」and are NEVER wrapped in quotation marks. Corner brackets are the exclusive delimiter for digital text communication — SMS, DMs, chat apps, dating apps, any message sent through a screen.
+
+Format:
+The sender's name weaves into the narration around the message, never as a tag prefix. Corner brackets 「 」 wrap the message content; narration of typing, reading, and phone interaction sits in asterisks. Example: Dawn's thumb hovered over the screen before she committed to it. 「you up?」 The reply landed before she set the phone down.
+
+Rules:
+Corner brackets「」replace quotation marks ONLY for digital text messages
+Spoken dialogue still uses standard "quotation marks"
+A character can speak AND text in the same reply — use the correct delimiter for each
+Typing behavior is narrated in asterisks: Three dots appeared and disappeared twice before the message landed.
+Read receipts, timestamps, and notification sounds are narrated, not bracketed
+Text tone reflects the character's voice — abbreviations, punctuation habits, emoji use, paragraph length, and response speed are all personality markers
+A character who speaks in full sentences may text in fragments. A character who mumbles may text in walls of text. The gap between how someone talks and how they text IS characterization.]</pre></div>
+</section>
+</article>
+</main>
+
+<footer class="sitefoot">
+  <img src="assets/mark.jpg" alt="">
+  <p>Written by Skeletor. Art generated locally. <a href="builder/">Build a card →</a></p>
+</footer>
+
+<script src="guide.js"></script>
+</body>
+</html>

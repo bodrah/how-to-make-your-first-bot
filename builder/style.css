@@ -1,14 +1,16 @@
 :root {
-  --bg: #0b0b0c;
-  --panel: #141416;
-  --panel2: #1b1b1e;
-  --line: #2f2f34;
-  --text: #ececf0;
-  --dim: #9a9aa4;
-  --rust: #c2552f;
-  --rust-soft: rgba(194, 85, 47, .16);
-  --warn: #e0563f;
-  --ok: #6fae63;
+  /* bone, violet and necromancer green */
+  --bg: #0a0710;
+  --panel: #150f1e;
+  --panel2: #1d1528;
+  --line: #372b47;
+  --text: #ece6dd;          /* bone */
+  --dim: #9b90ad;
+  --rust: #8d4fc4;          /* violet, the primary */
+  --rust-soft: rgba(141, 79, 196, .18);
+  --acid: #6ee7a0;          /* the green that glows */
+  --warn: #ff5d7a;
+  --ok: #6ee7a0;
   --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
 }
 
@@ -226,3 +228,32 @@ main {
   .pilllabel { display: none; }        /* numbers only when space is tight */
   .progress { font-size: .74rem; }
 }
+
+
+/* ------------------------------------------------------- necromancer bits */
+body {
+  background:
+    radial-gradient(900px 380px at 78% -6%, rgba(110, 231, 160, .10), transparent 65%),
+    radial-gradient(800px 420px at 12% 0%, rgba(141, 79, 196, .16), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+}
+.masthead {
+  background: linear-gradient(rgba(6,4,10,.96), rgba(6,4,10,.88));
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 1px 0 rgba(110,231,160,.12);
+}
+.mastrow h1 span { color: var(--acid); text-shadow: 0 0 14px rgba(110,231,160,.45); }
+.mastmark {
+  width: 34px; height: 34px; border-radius: 8px; object-fit: cover;
+  border: 1px solid var(--line); margin-right: .6rem; vertical-align: middle;
+}
+.mastrow h1 { display: flex; align-items: center; }
+.pill.done .pillnum { background: var(--acid); border-color: var(--acid); color: #05210f; }
+.lintflag.ok { color: var(--acid); border-color: rgba(110,231,160,.45); background: rgba(110,231,160,.09); }
+button.go { box-shadow: 0 0 18px rgba(141,79,196,.35); }
+.output { border-left-color: var(--acid); }
+.col.picked { border-color: var(--acid); background: rgba(110,231,160,.07); }
+button.mini.on { background: var(--acid); border-color: var(--acid); color: #05210f; }
+.castheading { color: var(--acid); }
+.note.ok { color: var(--acid); }

@@ -10,7 +10,7 @@ In this thread I will share things I have learned since I started on this journe
 
 ---
 
-> ### 🛠 [Open the Bot Builder →](https://coleman984.github.io/how-to-make-your-first-bot/builder/)
+> ### 🛠 [Open the Bot Builder →](https://bodrah.github.io/how-to-make-your-first-bot/builder/)
 >
 > The guide as a tool: fill the fields in, it checks Step 0 as you type, and it hands you a finished card. Optional AI assist with your own key (Anthropic, OpenAI, Gemini, OpenRouter, or your own machine).
 
