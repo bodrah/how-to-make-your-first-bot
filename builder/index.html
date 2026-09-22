@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skeletor's Bot Builder</title>
+<meta name="description" content="Build a character card field by field, with Skeletor's method built in.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <strong>Skeletor's Bot Builder</strong>
+    <span class="tag">your card, field by field</span>
+  </div>
+  <div class="topright">
+    <button id="lintflag" class="lintflag ok" type="button">Step 0: clean</button>
+    <a class="guidelink" href="../">Read the guide ↗</a>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="side">
+    <nav id="nav"></nav>
+    <p class="saved">Everything you type stays in this browser. Nothing is uploaded.</p>
+  </aside>
+  <main id="main"></main>
+</div>
+
+<p id="status" class="status"></p>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

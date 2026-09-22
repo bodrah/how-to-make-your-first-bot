@@ -10,6 +10,12 @@ In this thread I will share things I have learned since I started on this journe
 
 ---
 
+> ### 🛠 [Open the Bot Builder →](https://coleman984.github.io/how-to-make-your-first-bot/builder/)
+>
+> The guide as a tool: fill the fields in, it checks Step 0 as you type, and it hands you a finished card. Optional AI assist with your own key (Anthropic, OpenAI, Gemini, OpenRouter, or your own machine).
+
+---
+
 **Contents:** [Step 0](#step-0) · [Step 1 - Character Background](#step-1---character-background) · [Step 2 - The Personality](#step-2---the-personality) · [Side characters](#side-characters-w) · [Character Embeds](#character-embeds) · [Rules](#rules) · [Text Messaging](#text-messaging)
 
 ---
