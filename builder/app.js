@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=a722eb1";
-import { VENDORS, buildFileRequest } from "./ai.js?v=a722eb1";
-import { embedCard, toPngBytes } from "./png.js?v=a722eb1";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=00bae49";
+import { VENDORS, buildFileRequest } from "./ai.js?v=00bae49";
+import { embedCard, toPngBytes } from "./png.js?v=00bae49";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -845,7 +845,11 @@ function renderTrackers() {
     box.type = "checkbox";
     box.checked = on;
     box.disabled = !!tracker.mandatory;
-    box.onchange = () => { state.trackers[tracker.id] = box.checked; save(); render(); };
+    box.onchange = () => {
+      state.trackers[tracker.id] = box.checked;
+      row.classList.toggle("on", box.checked);
+      save(); renderRail();
+    };
     row.append(box);
     const title = el("div", "tracktitle");
     title.append(el("span", "trackicon", tracker.icon));
@@ -874,7 +878,11 @@ function renderTags() {
       const box = el("input");
       box.type = "checkbox";
       box.checked = on;
-      box.onchange = () => { state.tags[name] = box.checked; save(); render(); };
+      box.onchange = () => {
+        state.tags[name] = box.checked;
+        row.classList.toggle("on", box.checked);
+        save(); renderRail();
+      };
       row.append(box);
       row.append(el("span", null, name));
       wrap.append(row);
@@ -1217,8 +1225,15 @@ function renderExport() {
 }
 
 /* ------------------------------------------------------------------ main */
+let lastRendered = null;
+
 function render() {
   const main = $("#main");
+  // Ticking a box redraws the step. Stay where they were reading — only a
+  // change of step goes back to the top.
+  const sameStep = lastRendered === activeSection;
+  const scrollWas = window.scrollY;
+  lastRendered = activeSection;
   main.innerHTML = "";
   renderRail();
   const section = SECTIONS.find((s) => s.id === activeSection);
@@ -1232,7 +1247,9 @@ function render() {
   else if (activeSection === "ai") renderAI();
   else if (activeSection === "review") renderReview();
   else renderExport();
-  window.scrollTo(0, 0);
+  // after the step has laid out — rule boxes resize on the next frame
+  if (sameStep) requestAnimationFrame(() => window.scrollTo(0, scrollWas));
+  else window.scrollTo(0, 0);
 }
 
 /* -------------------------------------------------------------- ai bridge */
