@@ -1,7 +1,7 @@
 // Bring-your-own-key calls, straight from the browser to the vendor.
 // Every vendor here was checked to allow browser (CORS) requests; the key never
 // touches any server of ours, because there isn't one.
-import { MASTER_PROMPT, SINGLE_FIELD_SUFFIX } from "./master-prompt.js?v=8f55410";
+import { MASTER_PROMPT, SINGLE_FIELD_SUFFIX } from "./master-prompt.js?v=c4ae294";
 
 export const VENDORS = {
   anthropic: {

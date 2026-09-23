@@ -11,6 +11,10 @@ export const SECTIONS = [
     fields: [
       ["first_name", "Name", "What they are called. First name, full name, a handle — whatever people use for them. Used everywhere, with or without AI assist.",
         { line: "Name", short: true, placeholder: "Belle", always: true }],
+      ["age", "Age", "A number, and it must be 18 or older. Apparent age plus real age if they differ.",
+        { line: "Age", short: true, minAge: 18, placeholder: "27", always: true }],
+      ["appearance", "Appearance", "Height, build, skin, hair, eyes, face, what they wear, what they carry.",
+        { line: "Appearance", always: true, placeholder: "5'4\", soft and curvy, light brown hair usually clipped up, brown eyes, no makeup most days. Oversized t-shirts and thick socks at home." }],
       ["seed", "The premise", "What is the core of this character? One line. A premise, a job, a wound, an image.",
         { tip: "The short version of who this is, before any detail — what you would say if somebody asked and you had one sentence." }],
       ["wound", "The defining wound", "What is the one thing that shaped who she is now?"],
@@ -37,9 +41,6 @@ export const SECTIONS = [
     exported: true,
     wrap: (name) => [`[${name || "Name"}'s Character Profile:`, "]"],
     fields: [
-      ["age", "Age", "A number, and it must be 18 or older. Apparent age plus real age if they differ.",
-        { line: "Age", short: true, minAge: 18, placeholder: "27" }],
-      ["appearance", "Appearance", "Height, build, skin, hair, eyes, face, what they wear, what they carry.", { line: "Appearance" }],
       ["background", "Background", "The cover story they tell people. Where they came from and how they got here. No secrets.", { line: "Background" }],
       ["likes", "Likes and Hobbies", "Real things a person would name out loud. Plain list.", { line: "Likes and Hobbies" }],
       ["dislikes", "Dislikes", "Real things a person would name out loud. Plain list.", { line: "Dislikes" }],

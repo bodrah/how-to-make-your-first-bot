@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER } from "./fields.js?v=8f55410";
-import { VENDORS, parseReply, buildRequest } from "./ai.js?v=8f55410";
-import { embedCard, toPngBytes } from "./png.js?v=8f55410";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER } from "./fields.js?v=c4ae294";
+import { VENDORS, parseReply, buildRequest } from "./ai.js?v=c4ae294";
+import { embedCard, toPngBytes } from "./png.js?v=c4ae294";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -138,8 +138,8 @@ function chosen(id, character = current()) {
   return character.choice[id] === "ai" && character.enhanced[id]
     ? character.enhanced[id] : character.values[id];
 }
-function nameField() {
-  return SECTIONS.flatMap((s) => s.fields).find((f) => f[0] === "first_name");
+function promoted() {
+  return SECTIONS.flatMap((s) => s.fields).filter((f) => (f[3] || {}).always);
 }
 
 function fieldLine(spec, value) {
@@ -177,8 +177,9 @@ function buildExport() {
     for (const section of SECTIONS) {
       if (!section.exported || section.scenario) continue;
       const own = section.fields.map((f) => fieldLine(f, chosen(f[0], character)));
-      // Name is collected in step 1 but belongs at the top of the profile block.
-      const lines = (section.id === "profile" ? [fieldLine(nameField(), chosen("first_name", character)), ...own] : own)
+      // Name, age and appearance are asked in step 1 but belong at the top of
+      // the profile block, in the order the method lists them.
+      const lines = (section.id === "profile" ? [...promoted().map((f) => fieldLine(f, chosen(f[0], character))), ...own] : own)
         .filter(Boolean);
       if (!lines.length) continue;
       const [open, close] = section.wrap(name);
@@ -293,7 +294,7 @@ function renderRail() {
     if (count) go.append(el("span", "pillcount", count));
     go.onclick = () => {
       const problem = ageProblem();
-      if (problem && activeSection === "profile" && step.id !== "profile") return status(problem, true);
+      if (problem && activeSection === "bible" && step.id !== "bible") return status(problem, true);
       activeSection = step.id; render();
     };
     pill.append(go);
@@ -308,7 +309,7 @@ function renderRail() {
   next.disabled = index === STEPS.length - 1;
   const leaving = () => {
     const problem = ageProblem();
-    if (problem && activeSection === "profile") { status(problem, true); return false; }
+    if (problem && activeSection === "bible") { status(problem, true); return false; }
     return true;
   };
   back.onclick = () => { if (leaving()) { activeSection = steps[Math.max(0, index - 1)].id; render(); } };
