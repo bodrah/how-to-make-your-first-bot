@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN } from "./fields.js?v=1449ba9";
-import { VENDORS, parseReply, buildRequest } from "./ai.js?v=1449ba9";
-import { embedCard, toPngBytes } from "./png.js?v=1449ba9";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN } from "./fields.js?v=85f3c15";
+import { VENDORS, parseReply, buildRequest } from "./ai.js?v=85f3c15";
+import { embedCard, toPngBytes } from "./png.js?v=85f3c15";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -8,8 +8,7 @@ const KEYSTORE = "skeletor-bot-builder-key";
 const state = load() || {
   characters: [blankCharacter()],
   sideChars: [],
-  acts: [],
-  howToRun: true,
+  acts: [{ title: "", text: "" }, { title: "", text: "" }, { title: "", text: "" }, { title: "", text: "" }],
   embeds: [],
   rules: { rule21: true, perspective: false, isolation: false, texting: false },
   ai: { on: false, vendor: "anthropic", model: "", remember: false, instruction: "",
@@ -22,7 +21,8 @@ if (!state.characters) {
 }
 state.characters.forEach((c) => { c.values ||= {}; c.enhanced ||= {}; c.choice ||= {}; });
 state.acts ||= [];
-if (state.howToRun === undefined) state.howToRun = true;
+// Four acts is the shape of the method; older saves get topped up to four.
+while (state.acts.length < 4) state.acts.push({ title: "", text: "" });
 let who = 0;                       // which character is on screen
 
 function blankCharacter(name = "") {
@@ -190,7 +190,7 @@ function buildExport() {
   const first = state.characters[0];
   const scenarioBits = [];
   const grab = (id) => (chosen(id, first) || "").trim();
-  if (state.howToRun) scenarioBits.push(HOW_TO_RUN);
+  scenarioBits.push(HOW_TO_RUN);
   const acts = state.acts.filter((a) => (a.title || "").trim() || (a.text || "").trim());
   if (acts.length) scenarioBits.push(acts.map((a, i) =>
     `#Act ${i + 1}${a.title ? " – " + a.title.trim() : ""}\n${(a.text || "").trim()}`).join("\n\n"));
@@ -384,14 +384,14 @@ function actsBox() {
   head.append(el("h3", null, "The acts"));
   head.append(tip("Where the story goes, in order. One box per act — name what changes, not every beat. Add as many as it takes."));
   wrap.append(head);
-  wrap.append(el("p", "help", "Each act gets its own box. They export as #Act 1, #Act 2, and so on, in this order."));
+  wrap.append(el("p", "help", "Four to start, the same as the method. Add more if the story needs them, or leave one empty and it is left out."));
 
   state.acts.forEach((act, index) => {
     const row = el("div", "act");
     const rowhead = el("div", "fieldhead");
     rowhead.append(el("strong", null, `Act ${index + 1}`));
     const title = el("input", "acttitle");
-    title.placeholder = index === 0 ? "The spare room" : "What this act is called";
+    title.placeholder = ["The spare room", "Small cracks", "Underneath", "She does not change"][index] || "What this act is called";
     title.value = act.title || "";
     title.oninput = () => { act.title = title.value; save(); };
     rowhead.append(title);
@@ -400,16 +400,19 @@ function actsBox() {
     rowhead.append(del);
     row.append(rowhead);
     const body = el("textarea");
-    body.placeholder = index === 0
-      ? "She is warm from the first minute, generous with space and compliments, and the place feels shared inside a week."
-      : "What changes in this act.";
+    body.placeholder = [
+      "She is warm from the first minute, generous with space and compliments, and the place feels shared inside a week.",
+      "Mail keeps arriving under a name she does not use. Rent goes unpaid for weeks, then lands in cash all at once.",
+      "What she actually does stays hidden unless the player digs for it. She never confesses.",
+      "Kindness does not open her, and getting caught does not reform her. When somebody becomes a threat, she leaves.",
+    ][index] || "What changes in this act.";
     body.value = act.text || "";
     body.oninput = () => { act.text = body.value; save(); renderRail(); };
     row.append(body);
     wrap.append(row);
   });
 
-  const add = el("button", "go", state.acts.length ? "Add another act" : "Add the first act");
+  const add = el("button", "ghost", "Add another act");
   add.onclick = () => { state.acts.push({ title: "", text: "" }); save(); render(); };
   wrap.append(add);
   return wrap;
@@ -527,17 +530,12 @@ function renderSection(section) {
 
   if (section.scenario) {
     const fixed = el("div", "card");
-    const head = el("label", "toggle");
-    const box = el("input");
-    box.type = "checkbox";
-    box.checked = state.howToRun;
-    box.onchange = () => { state.howToRun = box.checked; save(); renderRail(); };
-    head.append(box, el("span", null, "How to run this story"));
+    const head = el("div", "fieldhead");
+    head.append(el("h3", null, "How to run this story"));
+    head.append(el("span", "badge", "always included"));
+    head.append(tip("Fixed direction for the model, identical in every build. It tells the model to drive the story instead of waiting for the player, so there is nothing to decide here."));
     fixed.append(head);
-    const why = el("div", "fieldhead");
-    why.append(el("p", "help", "Fixed direction for the model, the same in every build — it goes into the card as written."));
-    why.append(tip("Like a rule: you are not writing this one, you are choosing whether to include it. It tells the model to drive the story instead of waiting for the player."));
-    fixed.append(why);
+    fixed.append(el("p", "help", "Goes into every card exactly as written."));
     fixed.append(el("pre", null, HOW_TO_RUN));
     main.append(fixed);
 
