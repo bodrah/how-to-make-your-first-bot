@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=e349a69";
-import { VENDORS, parseReply, buildRequest } from "./ai.js?v=e349a69";
-import { embedCard, toPngBytes } from "./png.js?v=e349a69";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=9fd7737";
+import { VENDORS, parseReply, buildRequest } from "./ai.js?v=9fd7737";
+import { embedCard, toPngBytes } from "./png.js?v=9fd7737";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
