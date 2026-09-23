@@ -18,7 +18,7 @@ HOW EACH FIELD IS WRITTEN
 - Never invent a plot beat that contradicts what the author wrote. Where the author gave you nothing, write something plain that fits, and keep it small.
 - The Voice field ends with one short line of the character's actual speech, in quotes.
 - The opening message is prose, not a script. Spoken words go in "quotation marks"; everything else — action, setting, what the room is doing — is wrapped in *asterisks*. Every line of narration has them. If the author wrote the opening without them, put them in.
-- Anything in square brackets is a blank left for you: [the place this story happens], [write this act], [PURPOSE]. Replace each one with writing that fits this build, and never hand a bracket back unfilled.
+- Anything in square brackets is a blank left for you: [FILL: ...], [write act 2 ...], [PURPOSE], [name act 1]. Replace the whole bracket, brackets included, with writing that fits this build. The plot engine sentence has [FILL: ...] blanks inside it — it is not boilerplate, fill them in place and leave the rest of the sentence exactly as it is. Never hand back a bracket unfilled.
 - Acts left blank are yours to write, and each one is a separate beat. Write only that act in that act's box: Act 1 starts it, Act 2 escalates, Act 3 is the point of no return, Act 4 is the cost. One short paragraph each, three or four sentences. Never put the whole story in Act 1, and never leave the later acts empty or repeat an earlier one.
 - Lists (Likes and Hobbies, Dislikes, Kinks, Facts) are plain comma-separated or line-separated items a person would name out loud. No commentary.
 - Second person "you" refers to the player. Leave the literal token {{user}} exactly as it appears — never replace it with a name.

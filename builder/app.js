@@ -1,7 +1,7 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=cfce2981";
-import { VENDORS, buildFileRequest } from "./ai.js?v=cfce2981";
-import { makeZip, textBytes } from "./zip.js?v=cfce2981";
-import { embedCard, toPngBytes } from "./png.js?v=cfce2981";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=26da5e3e";
+import { VENDORS, buildFileRequest } from "./ai.js?v=26da5e3e";
+import { makeZip, textBytes } from "./zip.js?v=26da5e3e";
+import { embedCard, toPngBytes } from "./png.js?v=26da5e3e";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -1557,7 +1557,7 @@ function readReturnedFile(reply) {
     const close = text.indexOf("}", engineAt);
     if (close > 0) {
       const block = text.slice(engineAt, close + 1).trim();
-      if (!state.aiBlocks.plotengine && !block.includes("[the place this story happens]")) {
+      if (!state.aiBlocks.plotengine && !block.includes("[FILL:")) {
         state.aiBlocks.plotengine = block;
         written++;
       }
@@ -1612,13 +1612,15 @@ function captureBlocks(reply, template) {
 // breaks inside it — the shape is fixed, only the contents change.
 function plotEngine(character, name) {
   const g = (id) => (chosen(id, character) || "").trim().replace(/\.$/, "");
-  const hole = (text) => (state.ai.on ? text : "");
-  const place = g("pe_place") || hole("[the place this story happens]");
-  const who = g("pe_inhabitants") || hole("[who and what lives there]");
-  const goal = g("pe_goal") || hole("[what they are after]");
-  const things = g("pe_things") || hole("[jobs, people and problems]");
-  const threat = g("pe_threat") || hole("[the threat working in the background]");
-  const cost = g("pe_cost") || hole("[what sitting still costs them]");
+  // A blank the model can't mistake for boilerplate. It reads the file as a
+  // finished card otherwise, and copies this block through untouched.
+  const hole = (text) => (state.ai.on ? `[FILL: ${text}]` : "");
+  const place = g("pe_place") || hole("name the place this story happens, a few words");
+  const who = g("pe_inhabitants") || hole("who and what lives there, a few words");
+  const goal = g("pe_goal") || hole("what the character is after, a few words");
+  const things = g("pe_things") || hole("the jobs, people and problems to throw at the player");
+  const threat = g("pe_threat") || hole("the threat working in the background");
+  const cost = g("pe_cost") || hole("what sitting still costs the player");
   if (!place && !who && !goal) return "";
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   // "a shipment nobody signed for" + " for {{user}} to handle" reads badly
