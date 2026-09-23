@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=19b627d";
-import { VENDORS, parseReply, buildRequest } from "./ai.js?v=19b627d";
-import { embedCard, toPngBytes } from "./png.js?v=19b627d";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=7412c9f";
+import { VENDORS, parseReply, buildRequest } from "./ai.js?v=7412c9f";
+import { embedCard, toPngBytes } from "./png.js?v=7412c9f";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -1310,7 +1310,6 @@ function buildCardJson() {
     scenario: parts.scenario,
     first_mes: parts.greeting,
     mes_example: dialogue,
-    opening_scene: "",
   };
 }
 
