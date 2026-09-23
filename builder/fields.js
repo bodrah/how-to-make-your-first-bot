@@ -212,6 +212,23 @@ export const LINTS = [
 ];
 
 
+// Mandatory. Every card carries it, word for word.
+export const MANDATORY_TRACKER = `[Scene Continuity Tracker - MANDATORY
+End EVERY response with current scene state:
+---
+
+⌚ Time: MM/DD/YYYY HH:MM AM/PM
+
+---
+🤼
+(List every non-user character present, one per line, using the stat format.)
+Name; ♀ or ♂; ⧗ age; 📏 height; ☮ role/relationship to {{user}}; 👚 current clothing/state of dress; ☠ current position, posture, and action
+RULES:
+- Update ONLY based on events in current reply
+- No time skips unless explicitly narrated
+- Track all present NPCs, not just speaking characters
+- Time format must always be MM/DD/YYYY HH:MM AM/PM]`;
+
 // Visible trackers. The card shows these to the player every reply.
 // Bodrah's list — add entries here as he sends them.
 export const TRACKERS = [

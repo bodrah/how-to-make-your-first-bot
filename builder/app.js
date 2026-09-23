@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS } from "./fields.js?v=58e60ec";
-import { VENDORS, parseReply, buildRequest } from "./ai.js?v=58e60ec";
-import { embedCard, toPngBytes } from "./png.js?v=58e60ec";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER } from "./fields.js?v=323a640";
+import { VENDORS, parseReply, buildRequest } from "./ai.js?v=323a640";
+import { embedCard, toPngBytes } from "./png.js?v=323a640";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -213,6 +213,7 @@ function buildExport() {
   if (rules.length) blocks.push(rules.join("\n\n"));
   const trackers = TRACKERS.filter((tr) => state.trackers[tr.id]).map((tr) => tr.text);
   if (trackers.length) blocks.push(trackers.join("\n"));
+  blocks.push(MANDATORY_TRACKER);
   return blocks.join("\n\n");
 }
 
@@ -693,6 +694,17 @@ function renderTrackers() {
     "The status lines the bot prints under every reply, so the player can see where they stand. Tick the ones this card should show.",
     TIPS.trackers);
 
+  const fixed = el("div", "card");
+  const fixedHead = el("div", "fieldhead");
+  fixedHead.append(el("h3", null, "Scene Continuity Tracker"));
+  fixedHead.append(el("span", "badge", "mandatory"));
+  fixedHead.append(tip("Every card carries this one. It makes the bot end each reply with the time, who is present, what they are wearing and what they are doing — which is what stops a long chat drifting."));
+  fixed.append(fixedHead);
+  fixed.append(el("p", "help", "Goes into every card exactly as written."));
+  fixed.append(el("pre", null, MANDATORY_TRACKER));
+  main.append(fixed);
+
+  main.append(el("h3", "castheading", "Optional trackers"));
   const list = el("div", "trackers");
   for (const tracker of TRACKERS) {
     const row = el("label", "trackrow" + (state.trackers[tracker.id] ? " on" : ""));
