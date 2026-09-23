@@ -1,7 +1,7 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=26da5e3e";
-import { VENDORS, buildFileRequest } from "./ai.js?v=26da5e3e";
-import { makeZip, textBytes } from "./zip.js?v=26da5e3e";
-import { embedCard, toPngBytes } from "./png.js?v=26da5e3e";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=7ae476dc";
+import { VENDORS, buildFileRequest } from "./ai.js?v=7ae476dc";
+import { makeZip, textBytes } from "./zip.js?v=7ae476dc";
+import { embedCard, toPngBytes } from "./png.js?v=7ae476dc";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -262,9 +262,7 @@ function buildParts() {
   const scenarioBits = [];
   const grab = (id) => (chosen(id, first) || "").trim();
   scenarioBits.push(HOW_TO_RUN);
-  const engine = state.ai.on && state.aiBlocks.plotengine
-    ? state.aiBlocks.plotengine
-    : plotEngine(first, chosen("first_name", first) || charName(0));
+  const engine = plotEngine(first, chosen("first_name", first) || charName(0));
   if (engine) scenarioBits.push(engine);
   const written = state.acts.filter((a) => (a.title || "").trim() || (a.text || "").trim());
   const acts = written.length || !state.ai.on ? written : state.acts;
@@ -328,7 +326,7 @@ function stepState(id) {
         if (section.id === "psych" && character.psychAuto) continue;
         if ((field[3] || {}).ownStep) continue;     // counted on its own step
         total++;
-        const value = character.values[field[0]] || "";
+        const value = chosen(field[0], character) || "";
         if (value.trim()) filled++;
         if (lintText(value).length || lintText(character.enhanced[field[0]] || "").length) problem = true;
       }
@@ -737,8 +735,9 @@ function renderSection(section) {
       engineOpen = false;
       main.append(el("hr", "enginerule"));
     }
-    main.append(fieldBox(id, swap(label.replace(/^Plot engine · /, ""), current()), swap(help, current()), current().values[id],
-      (v) => { current().values[id] = v; }, opts));
+    main.append(fieldBox(id, swap(label.replace(/^Plot engine · /, ""), current()), swap(help, current()),
+      chosen(id, current()),
+      (v) => { current().values[id] = v; current().choice[id] = "mine"; }, opts));
   }
 }
 
@@ -800,8 +799,8 @@ function renderGreeting() {
   const card = state.characters[0];
   const spec = SECTIONS.flatMap((s) => s.fields).find((f) => f[0] === "greeting");
   const [, label, help, opts = {}] = spec;
-  main.append(fieldBox("greeting", label, swap(help, card), card.values.greeting,
-    (v) => { card.values.greeting = v; }, opts));
+  main.append(fieldBox("greeting", label, swap(help, card), chosen("greeting", card),
+    (v) => { card.values.greeting = v; card.choice.greeting = "mine"; }, opts));
 
   const note = el("div", "card");
   note.append(el("h3", null, "Added to the end for you"));
@@ -1434,7 +1433,7 @@ async function enhanceAll(button) {
   try {
     status(`Sending the whole build to ${vendor.label} (${model})…`);
     const { system, user } = buildFileRequest({
-      file: buildTxt(),
+      file: buildTxt(true),
       lore: loreNotes(),
       context: buildContext(0),
       instruction: state.ai.instruction,
@@ -1509,7 +1508,7 @@ function readReturnedFile(reply) {
     const own = (character.values[id] || "").trim();
     if (clean === own) return;                       // unchanged, nothing to compare
     character.enhanced[id] = clean;
-    if (!character.choice[id]) character.choice[id] = "mine";
+    if (!character.choice[id]) character.choice[id] = own ? "mine" : "ai";
     written++;
   };
 
@@ -1552,15 +1551,20 @@ function readReturnedFile(reply) {
 
   lastKept = kept;
 
-  const engineAt = text.indexOf("{Plot engine:");
-  if (engineAt >= 0) {
-    const close = text.indexOf("}", engineAt);
-    if (close > 0) {
-      const block = text.slice(engineAt, close + 1).trim();
-      if (!state.aiBlocks.plotengine && !block.includes("[FILL:")) {
-        state.aiBlocks.plotengine = block;
-        written++;
-      }
+  // The blanks sheet comes back filled: one line per field the author left
+  // empty, which is how the scenario fields get written at all.
+  const sheet = text.match(/\[BLANKS[\s\S]*?\]\s*\n([\s\S]*?)(?=\n\s*\n|$)/);
+  if (sheet) {
+    const byLabel = {};
+    for (const section of SECTIONS)
+      for (const [id, label] of section.fields) byLabel[label.toLowerCase()] = id;
+    for (const line of sheet[1].split("\n")) {
+      const pair = line.match(/^(.+?):\s*(.+)$/);
+      if (!pair) continue;
+      const id = byLabel[pair[1].trim().toLowerCase()];
+      const value = pair[2].trim();
+      if (!id || !value || value.startsWith("[FILL")) continue;
+      set(state.characters[0], id, value);
     }
   }
 
@@ -1612,15 +1616,8 @@ function captureBlocks(reply, template) {
 // breaks inside it — the shape is fixed, only the contents change.
 function plotEngine(character, name) {
   const g = (id) => (chosen(id, character) || "").trim().replace(/\.$/, "");
-  // A blank the model can't mistake for boilerplate. It reads the file as a
-  // finished card otherwise, and copies this block through untouched.
-  const hole = (text) => (state.ai.on ? `[FILL: ${text}]` : "");
-  const place = g("pe_place") || hole("name the place this story happens, a few words");
-  const who = g("pe_inhabitants") || hole("who and what lives there, a few words");
-  const goal = g("pe_goal") || hole("what the character is after, a few words");
-  const things = g("pe_things") || hole("the jobs, people and problems to throw at the player");
-  const threat = g("pe_threat") || hole("the threat working in the background");
-  const cost = g("pe_cost") || hole("what sitting still costs the player");
+  const place = g("pe_place"), who = g("pe_inhabitants"), goal = g("pe_goal");
+  const things = g("pe_things"), threat = g("pe_threat"), cost = g("pe_cost");
   if (!place && !who && !goal) return "";
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   // "a shipment nobody signed for" + " for {{user}} to handle" reads badly
@@ -1633,7 +1630,21 @@ const RULE = "─".repeat(60);
 
 // A paste-ready file: one block per platform field, in the order the site asks
 // for them, so nobody has to work out which part goes where.
-function buildTxt() {
+// One line per field the author left blank, so the model has somewhere to
+// write them. Only ever sent to the model — never part of the download.
+function blanksSheet() {
+  const character = state.characters[0];
+  const wanted = SECTIONS.find((s) => s.scenario).fields
+    .filter(([id, , , opts = {}]) => !opts.ownStep && !(chosen(id, character) || "").trim());
+  if (!wanted.length) return "";
+  const lines = wanted.map(([, label, help]) => `${swap(label, character)}: [FILL: ${swap(help, character)}]`);
+  return [
+    "[BLANKS — the author left these empty. Fill every line: replace each [FILL: ...] with your own writing, a sentence or two, keep the label and the colon. The tool folds these into the card and deletes this block, so it never reaches the player.]",
+    ...lines,
+  ].join("\n");
+}
+
+function buildTxt(forModel = false) {
   const first = state.characters[0];
   const name = chosen("first_name", first) || charName(0);
   const parts = splitExport();
@@ -1654,7 +1665,8 @@ function buildTxt() {
     field(1, "NAME", "the Name field", name),
     field(2, "DESCRIPTION / PERSONALITY", "the Description field", parts.description),
     field(3, "OPENING", "the Opening field", parts.greeting),
-    field(4, "INSTRUCTIONS", "the Instructions field", parts.instructions),
+    field(4, "INSTRUCTIONS", "the Instructions field",
+          [parts.instructions, forModel ? blanksSheet() : ""].filter(Boolean).join("\n\n")),
   ].join("\n");
 }
 
