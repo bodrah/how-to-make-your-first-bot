@@ -1,4 +1,6 @@
 :root {
+  --violet: #8d4fc4;
+  --violet-soft: rgba(141,79,196,.18);
   /* bone, violet and necromancer green */
   --bg: #0a0710;
   --panel: #150f1e;
@@ -251,7 +253,7 @@ body {
   border: 1px solid var(--line); margin-right: .6rem; vertical-align: middle;
 }
 .mastrow h1 { display: flex; align-items: center; }
-.pill.done .pillnum { background: var(--acid); border-color: var(--acid); color: #05210f; }
+
 .lintflag.ok { color: var(--acid); border-color: rgba(110,231,160,.45); background: rgba(110,231,160,.09); }
 button.go { box-shadow: 0 0 18px rgba(141,79,196,.35); }
 .output { border-left-color: var(--acid); }
@@ -321,3 +323,14 @@ button.mini.on { background: var(--acid); border-color: var(--acid); color: #052
 .switchlabel { font-weight: 600; font-size: 1rem; }
 .aiswitch { display: inline-flex; align-items: center; gap: .45rem; }
 .aiswitch .switchlabel { font-size: .85rem; font-weight: 600; color: var(--dim); }
+
+/* ------------------------------------------------- step status, at a glance */
+:root { --amber: #e8b53a; }
+.pill.status-part .pillnum   { background: var(--amber); border-color: var(--amber); color: #2a1d00; }
+.pill.status-part            { border-color: rgba(232,181,58,.45); }
+.pill.status-done .pillnum   { background: var(--acid); border-color: var(--acid); color: #05210f; }
+.pill.status-done            { border-color: rgba(110,231,160,.4); }
+.pill.status-problem .pillnum{ background: var(--warn); border-color: var(--warn); color: #fff; }
+.pill.status-problem         { border-color: var(--warn); background: rgba(255,93,122,.10); }
+.pill.status-problem .pillcount { color: var(--warn); }
+.pill.on { border-color: var(--violet); background: var(--violet-soft); box-shadow: 0 0 0 1px var(--violet) inset; }

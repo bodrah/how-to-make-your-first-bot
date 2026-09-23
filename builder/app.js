@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER } from "./fields.js?v=6e19d96";
-import { VENDORS, parseReply, buildRequest } from "./ai.js?v=6e19d96";
-import { embedCard, toPngBytes } from "./png.js?v=6e19d96";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER } from "./fields.js?v=454fb75";
+import { VENDORS, parseReply, buildRequest } from "./ai.js?v=454fb75";
+import { embedCard, toPngBytes } from "./png.js?v=454fb75";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -93,7 +93,7 @@ const TIPS = {
   embeds: "One-liners for throwaway characters. Defining them stops the model inventing someone inconsistent, and it lets a lorebook hook onto the name.",
   rules: "Optional blocks you paste with the card. Tick only the ones a build actually needs.",
   trackers: "The little status lines the bot prints under every reply. Tick the ones this card should show the player.",
-  systems: "Bigger machines a card can run on — an RPG layer, a world system, that sort of thing. Not built yet.",
+  systems: "A collection of rules and trackers that work together, for things like RPGs. Currently in development.",
   ai: "Optional. Write your bot in plain english, describe what you want in each of the previous sections, then run Enhance the card at the end. The AI takes all of your fields, reads what you wrote, and expands it. You do not use what it gives you as is — it is your starting point.",
   scenario: "The story around the character — how it is run, the acts, the world, and the part the player has to earn instead of being told.",
   review: "Your version and the AI's version, side by side. Nothing is replaced — you pick which one exports, field by field.",
@@ -241,37 +241,56 @@ const STEPS = [
   { id: "export",   label: "Export",      tip: () => TIPS.export },
 ];
 
-function stepDone(id) {
+// Grey until touched, yellow while in progress, red when something on the step
+// fails a Step 0 check, green when it is both complete and clean.
+function stepState(id) {
   const section = SECTIONS.find((s) => s.id === id);
-  if (section) return state.characters.some((c) => section.fields.some((f) => (c.values[f[0]] || "").trim()));
-  if (id === "side") return state.sideChars.length > 0;
-  if (id === "embeds") return state.embeds.filter(Boolean).length > 0;
-  if (id === "rules") return Object.values(state.rules).some(Boolean);
-  if (id === "ai") return aiCount() > 0;
-  if (id === "review") return state.characters.some((c) => Object.values(c.choice).includes("ai"));
-  return false;
-}
 
-function stepCount(id) {
-  const section = SECTIONS.find((s) => s.id === id);
   if (section) {
-    const done = state.characters.reduce(
-      (n, c) => n + section.fields.filter((f) => (c.values[f[0]] || "").trim()).length, 0);
-    return `${done}/${section.fields.length * state.characters.length}`;
+    let filled = 0, total = 0, problem = false;
+    for (const character of state.characters) {
+      for (const field of section.fields) {
+        // a section handed to the AI is not counted against the author
+        if (section.id === "psych" && character.psychAuto) continue;
+        total++;
+        const value = character.values[field[0]] || "";
+        if (value.trim()) filled++;
+        if (lintText(value).length || lintText(character.enhanced[field[0]] || "").length) problem = true;
+      }
+    }
+    if (section.id === "scenario") {
+      const acts = state.acts.filter((a) => (a.text || "").trim() || (a.title || "").trim()).length;
+      filled += acts; total += Math.max(acts, 1);
+    }
+    if (section.fields.some((f) => (f[3] || {}).minAge) && ageProblem()) problem = true;
+    if (section.id === "psych" && state.characters.every((c) => c.psychAuto))
+      return { state: state.ai.on ? "done" : "part", count: "AI" };
+    if (problem) return { state: "problem", count: `${filled}/${total}` };
+    if (!filled) return { state: "empty", count: `0/${total}` };
+    return { state: filled >= total ? "done" : "part", count: `${filled}/${total}` };
   }
-  if (id === "scenario") {
-    const written = SECTIONS.find((s) => s.scenario).fields
-      .filter((f) => (current().values[f[0]] || "").trim()).length + state.acts.length;
-    return String(written);
+
+  if (id === "side" || id === "embeds") {
+    const items = id === "side" ? state.sideChars.length : state.embeds.filter(Boolean).length;
+    const problem = (id === "side" ? state.sideChars : state.embeds).some((entry) =>
+      Object.values(typeof entry === "string" ? { entry } : entry).some((v) => lintText(v || "").length));
+    if (problem) return { state: "problem", count: String(items) };
+    return { state: items ? "done" : "empty", count: String(items) };   // both are optional
   }
-  if (id === "side") return String(state.sideChars.length);
-  if (id === "embeds") return String(state.embeds.filter(Boolean).length);
-  if (id === "rules") return String(Object.values(state.rules).filter(Boolean).length);
-  if (id === "trackers") return String(Object.values(state.trackers).filter(Boolean).length);
-  if (id === "systems") return "";
-  if (id === "ai") return aiCount() ? String(aiCount()) : "";
-  if (id === "review") return aiCount() ? String(aiCount()) : "";
-  return "";
+  if (id === "rules" || id === "trackers") {
+    const on = id === "rules" ? Object.values(state.rules).filter(Boolean).length
+                              : Object.values(state.trackers).filter(Boolean).length;
+    return { state: "done", count: String(on) };     // both always carry a mandatory block
+  }
+  if (id === "ai") return { state: aiCount() ? "done" : "part", count: aiCount() ? String(aiCount()) : "" };
+  if (id === "review") {
+    if (allLintHits().length) return { state: "problem", count: String(allLintHits().length) };
+    return { state: aiCount() ? "done" : "empty", count: aiCount() ? String(aiCount()) : "" };
+  }
+  if (id === "export") {
+    return { state: allLintHits().length ? "problem" : "done", count: "" };
+  }
+  return { state: "empty", count: "" };
 }
 
 function activeSteps() {
@@ -286,14 +305,14 @@ function renderRail() {
   renderAiSwitch();
   const steps = activeSteps();
   steps.forEach((step, index) => {
-    const pill = el("div", "pill" + (activeSection === step.id ? " on" : "") + (stepDone(step.id) ? " done" : ""));
+    const status = stepState(step.id);
+    const pill = el("div", `pill status-${status.state}` + (activeSection === step.id ? " on" : ""));
     const go = el("button", "pillbtn");
     // AI assist is step 0 — it decides how the rest is used
     const number = steps[0].id === "ai" ? index : index + 1;
     go.append(el("span", "pillnum", String(number)));
     go.append(el("span", "pilllabel", step.label));
-    const count = stepCount(step.id);
-    if (count) go.append(el("span", "pillcount", count));
+    if (status.count) go.append(el("span", "pillcount", status.count));
     go.onclick = () => {
       const problem = ageProblem();
       if (problem && activeSection === "bible" && step.id !== "bible") return status(problem, true);
@@ -742,8 +761,8 @@ function renderSystems() {
   const main = $("#main");
   sectionHeading(main, "Systems", null, TIPS.systems);
   const card = el("div", "card soon");
-  card.append(el("h3", null, "Coming soon"));
-  card.append(el("p", "help", "Systems are the bigger machines a card can run on, dropped in whole rather than written field by field. They go here once they are ready."));
+  card.append(el("h3", null, "Currently in development"));
+  card.append(el("p", "help", "Systems are a collection of rules and trackers for things like RPGs."));
   main.append(card);
 }
 
