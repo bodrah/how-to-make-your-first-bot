@@ -319,3 +319,5 @@ button.mini.on { background: var(--acid); border-color: var(--acid); color: #052
 .card.soon h3 { color: var(--acid); margin-bottom: .4rem; }
 .switchrow { display: flex; align-items: center; gap: .7rem; }
 .switchlabel { font-weight: 600; font-size: 1rem; }
+.aiswitch { display: inline-flex; align-items: center; gap: .45rem; }
+.aiswitch .switchlabel { font-size: .85rem; font-weight: 600; color: var(--dim); }

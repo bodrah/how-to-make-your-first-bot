@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS } from "./fields.js?v=6e2e68d";
-import { VENDORS, parseReply, buildRequest } from "./ai.js?v=6e2e68d";
-import { embedCard, toPngBytes } from "./png.js?v=6e2e68d";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS } from "./fields.js?v=58e60ec";
+import { VENDORS, parseReply, buildRequest } from "./ai.js?v=58e60ec";
+import { embedCard, toPngBytes } from "./png.js?v=58e60ec";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -36,7 +36,7 @@ function charName(index) {
   return (c.choice?.first_name === "ai" ? c.enhanced.first_name : c.values.first_name) || `Character ${index + 1}`;
 }
 
-let activeSection = "ai";   // step 0 — it changes how everything else is used
+let activeSection = state.ai.on ? "ai" : "bible";
 let apiKey = sessionStorage.getItem(KEYSTORE) || localStorage.getItem(KEYSTORE) || "";
 let reviewChangedOnly = false;
 
@@ -265,13 +265,21 @@ function stepCount(id) {
   return "";
 }
 
+function activeSteps() {
+  // With AI assist off there is nothing to configure and nothing to compare,
+  // so neither step belongs in the run.
+  return STEPS.filter((s) => (s.id === "ai" || s.id === "review") ? state.ai.on : true);
+}
+
 function renderRail() {
   const rail = $("#rail");
   rail.innerHTML = "";
-  STEPS.forEach((step, index) => {
+  renderAiSwitch();
+  const steps = activeSteps();
+  steps.forEach((step, index) => {
     const pill = el("div", "pill" + (activeSection === step.id ? " on" : "") + (stepDone(step.id) ? " done" : ""));
     const go = el("button", "pillbtn");
-    go.append(el("span", "pillnum", String(index)));
+    go.append(el("span", "pillnum", String(index + 1)));
     go.append(el("span", "pilllabel", step.label));
     const count = stepCount(step.id);
     if (count) go.append(el("span", "pillcount", count));
@@ -281,21 +289,12 @@ function renderRail() {
       activeSection = step.id; render();
     };
     pill.append(go);
-    if (step.first) {
-      const sw = el("button", "switch" + (state.ai.on ? " on" : ""));
-      sw.type = "button";
-      sw.title = "Turn AI assist on or off";
-      sw.append(el("span", "switchtrack"));
-      sw.append(el("span", "switchword", state.ai.on ? "on" : "off"));
-      sw.onclick = (e) => { e.stopPropagation(); state.ai.on = !state.ai.on; save(); render(); };
-      pill.append(sw);
-    }
     pill.append(tip(step.tip()));
     rail.append(pill);
   });
 
-  const index = STEPS.findIndex((s) => s.id === activeSection);
-  $("#progress").textContent = `Step ${index} of ${STEPS.length - 1} · ${STEPS[index].label}`;
+  const index = Math.max(0, steps.findIndex((s) => s.id === activeSection));
+  $("#progress").textContent = `Step ${index + 1} of ${steps.length} · ${steps[index].label}`;
   const back = $("#back"), next = $("#next");
   back.disabled = index === 0;
   next.disabled = index === STEPS.length - 1;
@@ -304,8 +303,8 @@ function renderRail() {
     if (problem && activeSection === "profile") { status(problem, true); return false; }
     return true;
   };
-  back.onclick = () => { if (leaving()) { activeSection = STEPS[Math.max(0, index - 1)].id; render(); } };
-  next.onclick = () => { if (leaving()) { activeSection = STEPS[Math.min(STEPS.length - 1, index + 1)].id; render(); } };
+  back.onclick = () => { if (leaving()) { activeSection = steps[Math.max(0, index - 1)].id; render(); } };
+  next.onclick = () => { if (leaving()) { activeSection = steps[Math.min(steps.length - 1, index + 1)].id; render(); } };
 
   const hits = allLintHits();
   const flag = $("#lintflag");
@@ -673,6 +672,19 @@ function toggleSwitch(label, checked, onChange) {
   wrap.append(sw);
   wrap.append(el("span", "switchlabel", label));
   return wrap;
+}
+
+function renderAiSwitch() {
+  const slot = $("#aiswitch");
+  slot.innerHTML = "";
+  slot.append(toggleSwitch("AI assist", state.ai.on, (on) => {
+    state.ai.on = on;
+    if (on) activeSection = "ai";
+    else if (activeSection === "ai" || activeSection === "review") activeSection = "bible";
+    save();
+    render();
+  }));
+  slot.append(tip(TIPS.ai));
 }
 
 function renderTrackers() {
