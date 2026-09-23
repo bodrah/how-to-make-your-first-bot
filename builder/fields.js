@@ -210,3 +210,15 @@ export const LINTS = [
   { id: "girlboy", label: 'the words "a girl" / "a boy"', re: /\b(?:a|the|little|young|small)\s+(?:girl|boy)\b/gi,
     why: 'No "a girl," "a boy" for pre-adult years.' },
 ];
+
+
+// Visible trackers. The card shows these to the player every reply.
+// Bodrah's list — add entries here as he sends them.
+export const TRACKERS = [
+  { id: "affection", icon: "❤️", name: "Affection / relationship meter",
+    note: "Numeric bar. Milestone events log to EVENT MEMORY.",
+    text: "[❤️ Affection: 0-100, shown as a bar. Milestone changes are logged to EVENT MEMORY.]" },
+];
+
+// Systems are the bigger machines a card can run on. Coming later.
+export const SYSTEMS_SOON = true;

@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN } from "./fields.js?v=6a94c21";
-import { VENDORS, parseReply, buildRequest } from "./ai.js?v=6a94c21";
-import { embedCard, toPngBytes } from "./png.js?v=6a94c21";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS } from "./fields.js?v=c7a0384";
+import { VENDORS, parseReply, buildRequest } from "./ai.js?v=c7a0384";
+import { embedCard, toPngBytes } from "./png.js?v=c7a0384";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -11,6 +11,7 @@ const state = load() || {
   acts: [{ title: "", text: "" }, { title: "", text: "" }, { title: "", text: "" }, { title: "", text: "" }],
   embeds: [],
   rules: { rule21: true, perspective: false, isolation: false, texting: false },
+  trackers: {},
   ai: { on: false, vendor: "anthropic", model: "", remember: false, instruction: "",
         baseUrl: "http://localhost:11434/v1" },
 };
@@ -21,6 +22,7 @@ if (!state.characters) {
 }
 state.characters.forEach((c) => { c.values ||= {}; c.enhanced ||= {}; c.choice ||= {}; });
 state.acts ||= [];
+state.trackers ||= {};
 // Four acts is the shape of the method; older saves get topped up to four.
 while (state.acts.length < 4) state.acts.push({ title: "", text: "" });
 let who = 0;                       // which character is on screen
@@ -90,6 +92,8 @@ const TIPS = {
   side: "W++ sheets for characters who need depth but not a full build — big enough to matter, small enough not to be the lead.",
   embeds: "One-liners for throwaway characters. Defining them stops the model inventing someone inconsistent, and it lets a lorebook hook onto the name.",
   rules: "Optional blocks you paste with the card. Tick only the ones a build actually needs.",
+  trackers: "The little status lines the bot prints under every reply. Tick the ones this card should show the player.",
+  systems: "Bigger machines a card can run on — an RPG layer, a world system, that sort of thing. Not built yet.",
   ai: "Optional. Write your bot in plain english, describe what you want in each of the previous sections, then run Enhance the card at the end. The AI takes all of your fields, reads what you wrote, and expands it. You do not use what it gives you as is — it is your starting point.",
   scenario: "The story around the character — how it is run, the acts, the world, and the part the player has to earn instead of being told.",
   review: "Your version and the AI's version, side by side. Nothing is replaced — you pick which one exports, field by field.",
@@ -207,6 +211,8 @@ function buildExport() {
   if (embeds.length) blocks.push(embeds.join("\n"));
   const rules = RULES.filter((r) => state.rules[r.id]).map((r) => r.text);
   if (rules.length) blocks.push(rules.join("\n\n"));
+  const trackers = TRACKERS.filter((tr) => state.trackers[tr.id]).map((tr) => tr.text);
+  if (trackers.length) blocks.push(trackers.join("\n"));
   return blocks.join("\n\n");
 }
 
@@ -220,6 +226,8 @@ const STEPS = [
   { id: "embeds",   label: "Embeds",      tip: () => TIPS.embeds },
   { id: "scenario", label: "Scenario",    tip: () => TIPS.scenario },
   { id: "rules",    label: "Rules",       tip: () => TIPS.rules },
+  { id: "trackers", label: "Trackers",    tip: () => TIPS.trackers },
+  { id: "systems",  label: "Systems",     tip: () => TIPS.systems },
   { id: "review",   label: "Review",      tip: () => TIPS.review },
   { id: "export",   label: "Export",      tip: () => TIPS.export },
 ];
@@ -250,6 +258,8 @@ function stepCount(id) {
   if (id === "side") return String(state.sideChars.length);
   if (id === "embeds") return String(state.embeds.filter(Boolean).length);
   if (id === "rules") return String(Object.values(state.rules).filter(Boolean).length);
+  if (id === "trackers") return String(Object.values(state.trackers).filter(Boolean).length);
+  if (id === "systems") return "";
   if (id === "ai") return aiCount() ? String(aiCount()) : "";
   if (id === "review") return aiCount() ? String(aiCount()) : "";
   return "";
@@ -657,6 +667,42 @@ function renderRules() {
   }
 }
 
+function renderTrackers() {
+  const main = $("#main");
+  sectionHeading(main, "Trackers",
+    "The status lines the bot prints under every reply, so the player can see where they stand. Tick the ones this card should show.",
+    TIPS.trackers);
+
+  const list = el("div", "trackers");
+  for (const tracker of TRACKERS) {
+    const row = el("label", "trackrow" + (state.trackers[tracker.id] ? " on" : ""));
+    const box = el("input");
+    box.type = "checkbox";
+    box.checked = !!state.trackers[tracker.id];
+    box.onchange = () => { state.trackers[tracker.id] = box.checked; save(); render(); };
+    row.append(box);
+    const body = el("div", "trackbody");
+    const title = el("div", "tracktitle");
+    title.append(el("span", "trackicon", tracker.icon));
+    title.append(el("span", null, tracker.name));
+    body.append(title);
+    body.append(el("p", "tracknote", tracker.note));
+    row.append(body);
+    list.append(row);
+  }
+  main.append(list);
+  main.append(el("p", "note", "Hidden trackers — the ones the bot keeps to itself — are coming later."));
+}
+
+function renderSystems() {
+  const main = $("#main");
+  sectionHeading(main, "Systems", null, TIPS.systems);
+  const card = el("div", "card soon");
+  card.append(el("h3", null, "Coming soon"));
+  card.append(el("p", "help", "Systems are the bigger machines a card can run on, dropped in whole rather than written field by field. They go here once they are ready."));
+  main.append(card);
+}
+
 /* -------------------------------------------------------------- ai panel */
 function renderAI() {
   const main = $("#main");
@@ -985,6 +1031,8 @@ function render() {
   else if (activeSection === "side") renderSideChars();
   else if (activeSection === "embeds") renderEmbeds();
   else if (activeSection === "rules") renderRules();
+  else if (activeSection === "trackers") renderTrackers();
+  else if (activeSection === "systems") renderSystems();
   else if (activeSection === "ai") renderAI();
   else if (activeSection === "review") renderReview();
   else renderExport();

@@ -183,8 +183,8 @@ button.mini.on { background: var(--rust); border-color: var(--rust); color: #fff
 
 /* the rail: numbered stops, scrollable sideways on a phone */
 .rail {
-  display: flex; gap: .35rem; align-items: stretch;
-  padding: .3rem 1.4rem .7rem; overflow-x: auto; scrollbar-width: thin;
+  display: flex; gap: .35rem .4rem; align-items: stretch; flex-wrap: wrap;
+  padding: .3rem 1.4rem .7rem;
   max-width: 1180px; margin: 0 auto;
 }
 .pill {
@@ -300,3 +300,20 @@ button.mini.on { background: var(--acid); border-color: var(--acid); color: #052
 .acttitle { flex: 1; min-height: 0; padding: .35rem .6rem; font-size: .92rem; }
 .enginehead { margin-top: 1.6rem; }
 .enginerule { border: 0; border-top: 1px solid var(--line); margin: 1.6rem 0 1.2rem; }
+
+/* ------------------------------------------------------------- trackers */
+.trackers { display: grid; gap: .5rem; }
+.trackrow {
+  display: flex; gap: .7rem; align-items: flex-start; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--panel);
+  padding: .8rem .9rem;
+}
+.trackrow:hover { border-color: var(--violet); }
+.trackrow.on { border-color: var(--acid); background: rgba(110,231,160,.06); }
+.trackrow input { width: auto; min-height: 0; margin-top: .2rem; accent-color: var(--acid); }
+.trackbody { flex: 1; }
+.tracktitle { display: flex; align-items: center; gap: .5rem; font-weight: 600; }
+.trackicon { font-size: 1.05rem; }
+.tracknote { margin: .25rem 0 0; color: var(--dim); font-size: .88rem; }
+.card.soon { border-style: dashed; text-align: center; padding: 2rem 1.2rem; }
+.card.soon h3 { color: var(--acid); margin-bottom: .4rem; }
