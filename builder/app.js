@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=4bacbae";
-import { VENDORS, buildFileRequest } from "./ai.js?v=4bacbae";
-import { embedCard, toPngBytes } from "./png.js?v=4bacbae";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=5631a99";
+import { VENDORS, buildFileRequest } from "./ai.js?v=5631a99";
+import { embedCard, toPngBytes } from "./png.js?v=5631a99";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -28,6 +28,7 @@ state.rules ||= { rule21: true };
 state.rules.rule21 = true;            // the always-21 rule cannot be turned off
 state.trackers ||= {};
 state.tags ||= {};
+state.aiBlocks ||= {};
 state.ai ||= { on: false, vendor: "anthropic", model: "", remember: false, instruction: "",
                baseUrl: "http://localhost:11434/v1" };
 TRACKERS.filter((t) => t.mandatory).forEach((t) => { state.trackers[t.id] = true; });
@@ -181,12 +182,23 @@ function formatEmbed(raw) {
 
 // The greeting as it ships: their own opening, then the trackers they ticked,
 // so the first message already shows the state the card keeps.
+function aiBlock(rule) {
+  const written = (state.aiBlocks || {})[rule.id];
+  return state.ai.on && written ? written : rule.text;
+}
+
 function greetingOut(character) {
   const own = (chosen("greeting", character) || "").trim();
   if (!own) return "";
   const lines = TRACKERS.filter((t) => state.trackers[t.id] && t.greeting)
     .map((t) => `---\n\n${t.greeting}`);
   return lines.length ? `${own}\n\n${lines.join("\n\n")}` : own;
+}
+
+// AI-assist-only rules are not in the card at all unless assist is on, even if
+// they were ticked earlier and switched off afterwards.
+function liveRules() {
+  return RULES.filter((r) => state.rules[r.id] && (!r.aiOnly || state.ai.on));
 }
 
 function buildExport() {
@@ -205,6 +217,9 @@ function buildExport() {
       blocks.push([open, ...lines, close].join("\n"));
     }
   });
+  // rules that belong with the character, not in the rules block
+  for (const rule of liveRules().filter((r) => r.where === "personality"))
+    blocks.push(aiBlock(rule));
   for (const character of state.sideChars) {
     const written = WPP_FIELDS.filter(([key]) => (character[key] || "").trim());
     if (!written.length) continue;
@@ -232,12 +247,13 @@ function buildExport() {
                  grab("conflict") && `## Sources of conflict\n${grab("conflict")}`].filter(Boolean);
   if (world.length) scenarioBits.push(`# World Profile\n${world.join("\n\n")}`);
   if (grab("gated")) scenarioBits.push(`{ABSOLUTELY CRITICAL INFORMATION BELOW IS ONLY KNOWN BY the characters directly involved and no one else. It is never confessed. Anything the player learns must be earned slowly, through physical evidence, overheard moments, contradictions caught side by side, or somebody else talking:\n${grab("gated")}\n}`);
+  for (const rule of liveRules().filter((r) => r.where === "scenario")) scenarioBits.push(aiBlock(rule));
   scenarioBits.push(MANDATORY_TRACKER);
   if (scenarioBits.length) blocks.push(scenarioBits.join("\n\n"));
 
   const embeds = state.embeds.filter((e) => e && e.trim()).map(formatEmbed);
   if (embeds.length) blocks.push(embeds.join("\n"));
-  const rules = RULES.filter((r) => state.rules[r.id]).map((r) => r.text);
+  const rules = liveRules().filter((r) => !r.where).map((r) => r.text);
   if (rules.length) blocks.push(rules.join("\n\n"));
   const trackers = TRACKERS.filter((tr) => state.trackers[tr.id] && tr.text).map((tr) => tr.text);
   if (trackers.length) blocks.push(trackers.join("\n"));
@@ -760,6 +776,7 @@ function renderRules() {
   const main = $("#main");
   sectionHeading(main, "Rules", "These are optional rules I use on an as needed basis.", TIPS.rules);
   for (const rule of RULES) {
+    if (rule.aiOnly && !state.ai.on) continue;     // needs AI assist to be worth anything
     const card = el("div", "card");
     const head = el("label", "toggle");
     const box = el("input");
@@ -1258,6 +1275,9 @@ function buildContext(index) {
   const tags = Object.keys(state.tags).filter((t) => state.tags[t]);
   if (tags.length) out.push(`TAGS the author picked — the card has to earn every one of them:\n  ${tags.join(", ")}`);
 
+  const aiRules = liveRules().filter((r) => r.aiOnly);
+  if (aiRules.length) out.push(`BLOCKS WITH BLANKS TO FILL — these are in the file with placeholders still in square brackets, like [PURPOSE] or [tone — e.g. ...]. Replace every one of them with something written for this build, keep the rest of the block exactly as it is, and keep the block where it sits:\n  ${aiRules.map((r) => r.name).join(", ")}`);
+
   out.push(`FIXED BLOCKS the tool adds after you: the always-21 rule, the how-to-run-this-story block, and the Scene Continuity Tracker. Do not write them, do not repeat them, do not contradict them.`);
   return out;
 }
@@ -1349,6 +1369,7 @@ function readReturnedFile(reply) {
 
   const body = fieldBody(4) || text;
   let character = state.characters[0];
+  let inProfile = false;
   let currentId = null;
   let buffer = [];
   const flush = () => { if (currentId) set(character, currentId, buffer.join("\n")); currentId = null; buffer = []; };
@@ -1360,8 +1381,11 @@ function readReturnedFile(reply) {
       flush();
       const found = state.characters.findIndex((c, i) => charName(i).toLowerCase() === header[1].trim().toLowerCase());
       if (found >= 0) character = state.characters[found];
+      inProfile = true;
       continue;
     }
+    if (/^\[/.test(line.trim()) && !header) { flush(); inProfile = false; }   // some other block
+    if (!inProfile) continue;
     const pair = line.match(/^([A-Za-z][A-Za-z '\/{}|-]{1,40}):\s*(.*)$/);
     if (pair && map[pair[1].trim().toLowerCase()]) {
       flush();
@@ -1375,7 +1399,30 @@ function readReturnedFile(reply) {
     }
   }
   flush();
+
+  for (const rule of RULES.filter((r) => r.aiOnly && state.rules[r.id])) {
+    const filledIn = captureBlocks(text, rule.text);
+    if (filledIn && filledIn !== rule.text) { state.aiBlocks[rule.id] = filledIn; written++; }
+  }
   return written;
+}
+
+// Find the same bracketed blocks in the reply and take them back whole —
+// that is how a block with blanks in it comes home filled.
+function captureBlocks(reply, template) {
+  const out = [];
+  for (const block of template.split("\n\n")) {
+    const head = block.slice(0, Math.min(24, block.indexOf("\n") > 0 ? block.indexOf("\n") : block.length));
+    const at = reply.indexOf(head);
+    if (at < 0) return "";
+    let depth = 0, end = at;
+    for (let i = at; i < reply.length; i++) {
+      if (reply[i] === "[") depth++;
+      else if (reply[i] === "]") { depth--; if (!depth) { end = i + 1; break; } }
+    }
+    out.push(reply.slice(at, end).trim());
+  }
+  return out.join("\n\n");
 }
 
 // The shape SillyTavern and Chub read. Description carries the profile blocks;
