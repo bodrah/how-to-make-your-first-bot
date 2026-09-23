@@ -103,24 +103,26 @@ button:disabled { opacity: .55; cursor: default; }
 
 /* --------------------------------------------------------------- status */
 .status {
-  position: fixed; left: 50%; bottom: -4rem; transform: translateX(-50%);
-  margin: 0; padding: .65rem 1.1rem; border-radius: 999px;
+  position: fixed; left: 50%; bottom: -30rem; transform: translateX(-50%);
+  margin: 0; padding: .8rem 1.1rem; border-radius: 12px;
   background: var(--panel2); border: 1px solid var(--rust); color: var(--text);
-  font-size: .9rem; transition: bottom .2s ease; max-width: 90vw;
+  font-size: .92rem; line-height: 1.5; transition: bottom .2s ease;
+  width: min(680px, calc(100vw - 2rem)); max-height: 40vh; overflow: auto;
+  white-space: pre-wrap; word-break: break-word;   /* long API errors stay readable */
+  box-shadow: 0 10px 40px rgba(0,0,0,.65);
 }
-.status.show { bottom: 1.2rem; }
-.status.bad { border-color: var(--warn); background: var(--warn); color: #fff; bottom: 1.2rem; }
+.status.show, .status.bad { bottom: 4.6rem; }      /* clear of the footer bar */
+.status.bad { border-color: var(--warn); background: #2a0d15; color: #ffd9e0; }
 
 .qmark:hover, .qmark.open { color: #fff; border-color: var(--rust); background: var(--rust); }
 .tipbubble {
-  display: none; position: absolute; left: 50%; top: 1.6rem; transform: translateX(-50%);
-  width: max-content; max-width: 19rem; z-index: 20;
+  display: none; position: fixed; z-index: 60;
   padding: .55rem .7rem; text-align: left;
   background: #000; border: 1px solid var(--rust); border-radius: 8px;
   color: var(--text); font: 400 .82rem/1.45 system-ui, sans-serif;
   box-shadow: 0 6px 20px rgba(0,0,0,.6);
 }
-.qmark:hover .tipbubble, .qmark.open .tipbubble, .qmark:focus-visible .tipbubble { display: block; }
+.tipbubble.show { display: block; }
 .sectionhead { display: flex; align-items: center; gap: .5rem; }
 .rowlabel { display: flex; align-items: center; gap: .4rem; width: 9.5rem; }
 .rowlabel label { width: auto; }
@@ -257,3 +259,31 @@ button.go { box-shadow: 0 0 18px rgba(141,79,196,.35); }
 button.mini.on { background: var(--acid); border-color: var(--acid); color: #05210f; }
 .castheading { color: var(--acid); }
 .note.ok { color: var(--acid); }
+
+/* ---------------------------------------------------- the AI assist switch */
+.switch {
+  display: inline-flex; align-items: center; gap: .4rem;
+  background: none; border: 0; cursor: pointer; padding: 0 .2rem;
+}
+.switchtrack {
+  position: relative; width: 2.4rem; height: 1.25rem; border-radius: 999px;
+  background: #241a30; border: 1px solid var(--line); transition: background .15s;
+}
+.switchtrack::after {
+  content: ""; position: absolute; top: 1px; left: 1px;
+  width: 1.05rem; height: 1.05rem; border-radius: 50%;
+  background: var(--dim); transition: transform .15s, background .15s;
+}
+.switch.on .switchtrack { background: rgba(110,231,160,.25); border-color: var(--acid); }
+.switch.on .switchtrack::after { transform: translateX(1.1rem); background: var(--acid); }
+.switchword {
+  font: 700 .72rem/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--dim);
+}
+.switch.on .switchword { color: var(--acid); }
+.bigtoggle { font-size: 1rem; }
+.lintflag[hidden] { display: none; }
+.warnline {
+  margin: .8rem 0 0; padding: .7rem .9rem;
+  border-left: 3px solid var(--warn); background: rgba(255,93,122,.08);
+  color: #ffd9e0; border-radius: 0 8px 8px 0;
+}

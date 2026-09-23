@@ -29,7 +29,7 @@ function charName(index) {
   return (c.choice?.first_name === "ai" ? c.enhanced.first_name : c.values.first_name) || `Character ${index + 1}`;
 }
 
-let activeSection = "bible";
+let activeSection = "ai";   // step 0 — it changes how everything else is used
 let apiKey = sessionStorage.getItem(KEYSTORE) || localStorage.getItem(KEYSTORE) || "";
 let reviewChangedOnly = false;
 
@@ -47,25 +47,46 @@ function tip(text) {
   const mark = el("button", "qmark", "?");
   mark.type = "button";
   mark.setAttribute("aria-label", text);
-  const bubble = el("span", "tipbubble", text);
-  mark.append(bubble);
-  mark.onclick = (e) => {
-    e.preventDefault();
-    document.querySelectorAll(".qmark.open").forEach((m) => m !== mark && m.classList.remove("open"));
-    mark.classList.toggle("open");
+  const show = () => {
+    hideTips();
+    const bubble = el("div", "tipbubble show", text);
+    document.body.append(bubble);            // on the body, so nothing clips it
+    const box = mark.getBoundingClientRect();
+    const width = Math.min(320, window.innerWidth - 24);
+    bubble.style.width = width + "px";
+    let left = box.left + box.width / 2 - width / 2;
+    left = Math.max(12, Math.min(left, window.innerWidth - width - 12));
+    bubble.style.left = left + "px";
+    const below = box.bottom + 8;
+    if (below + bubble.offsetHeight > window.innerHeight - 70) {
+      bubble.style.top = Math.max(12, box.top - bubble.offsetHeight - 8) + "px";
+    } else {
+      bubble.style.top = below + "px";
+    }
+    mark.classList.add("open");
   };
+  mark.onclick = (e) => { e.preventDefault(); e.stopPropagation(); show(); };   // hover may have opened it already
+  mark.onmouseenter = show;
+  mark.onmouseleave = () => setTimeout(() => { if (!mark.matches(":hover")) hideTips(); }, 120);
+  mark.onfocus = show;
+  mark.onblur = hideTips;
   return mark;
+}
+function hideTips() {
+  document.querySelectorAll(".tipbubble").forEach((b) => b.remove());
+  document.querySelectorAll(".qmark.open").forEach((m) => m.classList.remove("open"));
 }
 
 const TIPS = {
-  bible: "Your thinking space. Answer in plain English — none of it goes into the finished card, but the AI reads it when it drafts your fields.",
+  bible: "Your character's lore. This section is only used if you are using AI Assist — none of it is exported.",
   profile: "The block the chat model reads first. Short, concrete, observable. This is what keeps a character behaving like themselves.",
   psych: "Written like a profiler's assessment. It explains the why underneath the behaviour, which keeps the model consistent when a scene gets complicated.",
   facts: "Small hard details that need no explaining. Cheap to include and they make a character feel lived in.",
   side: "W++ sheets for characters who need depth but not a full build — big enough to matter, small enough not to be the lead.",
   embeds: "One-liners for throwaway characters. Defining them stops the model inventing someone inconsistent, and it lets a lorebook hook onto the name.",
   rules: "Optional blocks you paste with the card. Tick only the ones a build actually needs.",
-  ai: "Optional. You bring your own key, the request goes straight from your browser to the vendor, and it writes in the house style from the guide.",
+  ai: "Optional. Write your bot in plain english describe what you want in each of the previous sections then run Enhance the card at the end. The ai will take all of your fields, read what you wrote and then expand it. It is HIGHLY reconmend that you DO NOT use this as is. Instead use this as your starting point, edit, rewrite, expand. If you publish a bot created entirely by AI people WILL noticed and they will NOT have a good time.",
+  scenario: "The story around the character — how it is run, the acts, the world, and the part the player has to earn instead of being told.",
   review: "Your version and the AI's version, side by side. Nothing is replaced — you pick which one exports, field by field.",
   export: "The finished card, assembled in the formats from the guide. Copy it, or save it to carry on later.",
   lintflag: "Step 0 runs while you type: no child ages, no pre-adult words, nothing minor-coded. It checks every field, including anything the AI wrote.",
@@ -117,12 +138,31 @@ function fieldLine(spec, value) {
   if (opts.block) return `${opts.line}:\n${value.trim()}`;
   return `${opts.line}: ${value.trim()}`;
 }
+// Takes whatever they wrote and lands it in the embed shape from the guide:
+// [Name — age:XX;gender:X;appearance:tag,tag. Personality sentences.]
+function formatEmbed(raw) {
+  let text = raw.trim().replace(/^\[|\]$/g, "").trim();
+  if (/—\s*age:/i.test(text)) return `[${text}]`;          // already in shape
+  const parts = text.split(/,\s*/);
+  const name = (parts.shift() || "Name").trim();
+  const age = (parts.find((p) => /^\d{1,3}$/.test(p.trim())) || "").trim();
+  const gender = (parts.find((p) => /^(male|female|man|woman|other|nb|non-?binary)$/i.test(p.trim())) || "").trim();
+  const used = new Set([age, gender]);
+  const rest = parts.filter((p) => !used.has(p.trim()));
+  const sentenceAt = rest.findIndex((p) => /[.!?]/.test(p));
+  const tags = (sentenceAt === -1 ? rest : rest.slice(0, sentenceAt)).map((s) => s.trim()).filter(Boolean);
+  const prose = sentenceAt === -1 ? "" : rest.slice(sentenceAt).join(", ").trim();
+  const head = [name, age && `age:${age}`, gender && `gender:${gender.toLowerCase()}`,
+                tags.length && `appearance:${tags.join(",")}`].filter(Boolean);
+  return `[${head[0]} — ${head.slice(1).join(";")}${prose ? ". " + prose : "."}]`;
+}
+
 function buildExport() {
   const blocks = [];
   state.characters.forEach((character, index) => {
     const name = chosen("first_name", character) || charName(index);
     for (const section of SECTIONS) {
-      if (!section.exported) continue;
+      if (!section.exported || section.scenario) continue;
       const lines = section.fields.map((f) => fieldLine(f, chosen(f[0], character))).filter(Boolean);
       if (!lines.length) continue;
       const [open, close] = section.wrap(name);
@@ -141,8 +181,21 @@ function buildExport() {
       character.closer ? character.closer.trim() + "]" : "]",
     ].join("\n"));
   }
-  const embeds = state.embeds.filter((e) => e && e.trim());
-  if (embeds.length) blocks.push(embeds.map((e) => e.trim()).join("\n"));
+  const sc = SECTIONS.find((s) => s.scenario);
+  const first = state.characters[0];
+  const scenarioBits = [];
+  const grab = (id) => (chosen(id, first) || "").trim();
+  if (grab("how_to_run")) scenarioBits.push(`[How to run this story:\n${grab("how_to_run")}]`);
+  if (grab("acts")) scenarioBits.push(grab("acts").split(/\n{2,}|\n(?=Act )/i).map((a) => `#${a.trim()}`).join("\n\n"));
+  const world = [grab("world_setting") && `## Setting\n${grab("world_setting")}`,
+                 grab("problem") && `## The problem\n${grab("problem")}`,
+                 grab("conflict") && `## Sources of conflict\n${grab("conflict")}`].filter(Boolean);
+  if (world.length) scenarioBits.push(`# World Profile\n${world.join("\n\n")}`);
+  if (grab("gated")) scenarioBits.push(`{ABSOLUTELY CRITICAL INFORMATION BELOW IS ONLY KNOWN BY the characters directly involved and no one else. It is never confessed. Anything the player learns must be earned slowly, through physical evidence, overheard moments, contradictions caught side by side, or somebody else talking:\n${grab("gated")}\n}`);
+  if (scenarioBits.length) blocks.push(scenarioBits.join("\n\n"));
+
+  const embeds = state.embeds.filter((e) => e && e.trim()).map(formatEmbed);
+  if (embeds.length) blocks.push(embeds.join("\n"));
   const rules = RULES.filter((r) => state.rules[r.id]).map((r) => r.text);
   if (rules.length) blocks.push(rules.join("\n\n"));
   return blocks.join("\n\n");
@@ -150,16 +203,16 @@ function buildExport() {
 
 /* ----------------------------------------------------------------- steps */
 const STEPS = [
-  { id: "bible",   label: "Background",  tip: () => TIPS.bible },
-  { id: "profile", label: "Personality", tip: () => TIPS.profile },
-  { id: "psych",   label: "Psychology",  tip: () => TIPS.psych },
-  { id: "facts",   label: "Facts",       tip: () => TIPS.facts },
-  { id: "side",    label: "Side cast",   tip: () => TIPS.side },
-  { id: "embeds",  label: "Embeds",      tip: () => TIPS.embeds },
-  { id: "rules",   label: "Rules",       tip: () => TIPS.rules },
-  { id: "ai",      label: "AI enhance",  tip: () => TIPS.ai, toggle: true },
-  { id: "review",  label: "Review",      tip: () => TIPS.review },
-  { id: "export",  label: "Export",      tip: () => TIPS.export },
+  { id: "ai",       label: "AI assist",   tip: () => TIPS.ai, first: true },
+  { id: "bible",    label: "Lore",        tip: () => TIPS.bible },
+  { id: "profile",  label: "Personality", tip: () => TIPS.profile },
+  { id: "psych",    label: "Psychology",  tip: () => TIPS.psych },
+  { id: "side",     label: "Side cast",   tip: () => TIPS.side },
+  { id: "embeds",   label: "Embeds",      tip: () => TIPS.embeds },
+  { id: "scenario", label: "Scenario",    tip: () => TIPS.scenario },
+  { id: "rules",    label: "Rules",       tip: () => TIPS.rules },
+  { id: "review",   label: "Review",      tip: () => TIPS.review },
+  { id: "export",   label: "Export",      tip: () => TIPS.export },
 ];
 
 function stepDone(id) {
@@ -194,38 +247,49 @@ function renderRail() {
   STEPS.forEach((step, index) => {
     const pill = el("div", "pill" + (activeSection === step.id ? " on" : "") + (stepDone(step.id) ? " done" : ""));
     const go = el("button", "pillbtn");
-    go.append(el("span", "pillnum", String(index + 1)));
+    go.append(el("span", "pillnum", String(index)));
     go.append(el("span", "pilllabel", step.label));
     const count = stepCount(step.id);
     if (count) go.append(el("span", "pillcount", count));
-    go.onclick = () => { activeSection = step.id; render(); };
+    go.onclick = () => {
+      const problem = ageProblem();
+      if (problem && activeSection === "profile" && step.id !== "profile") return status(problem, true);
+      activeSection = step.id; render();
+    };
     pill.append(go);
-    if (step.toggle) {
-      const box = el("input", "pilltoggle");
-      box.type = "checkbox";
-      box.checked = state.ai.on;
-      box.title = "Turn AI assist on or off";
-      box.onclick = (e) => e.stopPropagation();
-      box.onchange = () => { state.ai.on = box.checked; save(); render(); };
-      pill.append(box);
+    if (step.first) {
+      const sw = el("button", "switch" + (state.ai.on ? " on" : ""));
+      sw.type = "button";
+      sw.title = "Turn AI assist on or off";
+      sw.append(el("span", "switchtrack"));
+      sw.append(el("span", "switchword", state.ai.on ? "on" : "off"));
+      sw.onclick = (e) => { e.stopPropagation(); state.ai.on = !state.ai.on; save(); render(); };
+      pill.append(sw);
     }
     pill.append(tip(step.tip()));
     rail.append(pill);
   });
 
   const index = STEPS.findIndex((s) => s.id === activeSection);
-  $("#progress").textContent = `Step ${index + 1} of ${STEPS.length} · ${STEPS[index].label}`;
+  $("#progress").textContent = `Step ${index} of ${STEPS.length - 1} · ${STEPS[index].label}`;
   const back = $("#back"), next = $("#next");
   back.disabled = index === 0;
   next.disabled = index === STEPS.length - 1;
-  back.onclick = () => { activeSection = STEPS[Math.max(0, index - 1)].id; render(); };
-  next.onclick = () => { activeSection = STEPS[Math.min(STEPS.length - 1, index + 1)].id; render(); };
+  const leaving = () => {
+    const problem = ageProblem();
+    if (problem && activeSection === "profile") { status(problem, true); return false; }
+    return true;
+  };
+  back.onclick = () => { if (leaving()) { activeSection = STEPS[Math.max(0, index - 1)].id; render(); } };
+  next.onclick = () => { if (leaving()) { activeSection = STEPS[Math.min(STEPS.length - 1, index + 1)].id; render(); } };
 
   const hits = allLintHits();
   const flag = $("#lintflag");
-  flag.className = hits.length ? "lintflag bad" : "lintflag ok";
-  flag.textContent = hits.length ? `Step 0: ${hits.length} to fix` : "Step 0: clean";
-  flag.onclick = () => { activeSection = "export"; render(); };
+  if (!hits.length) { flag.hidden = true; return; }
+  flag.hidden = false;
+  flag.className = "lintflag bad";
+  flag.textContent = `${hits.length} to fix`;
+  flag.onclick = () => { activeSection = "review"; render(); };
   flag.append(tip(TIPS.lintflag));
 }
 
@@ -248,6 +312,7 @@ function fieldBox(id, label, help, value, onInput, opts = {}) {
   wrap.append(el("p", "help", help));
   const input = el("textarea");
   if (opts.short) input.rows = 1;
+  if (opts.placeholder) input.placeholder = opts.placeholder;   // clears the moment they type
   input.value = value || "";
   input.oninput = (e) => {
     onInput(e.target.value);
@@ -268,6 +333,19 @@ function showLint(wrap, value) {
     warn.append(document.createTextNode(`“${hit.found.join("”, “")}”. ${hit.why}`));
     wrap.append(warn);
   }
+}
+
+// Nobody leaves a step with an under-18 age on it.
+function ageProblem() {
+  for (let i = 0; i < state.characters.length; i++) {
+    const raw = (state.characters[i].values.age || "").trim();
+    if (!raw) continue;
+    const numbers = raw.match(/\d{1,3}/g);
+    if (!numbers) continue;
+    const lowest = Math.min(...numbers.map(Number));
+    if (lowest < 18) return `${charName(i)} is written as ${lowest}. Everyone in a card must be 18 or older — fix the age before moving on.`;
+  }
+  return "";
 }
 
 function sectionHeading(main, title, blurb, tipText) {
@@ -322,7 +400,29 @@ function castBar(main) {
 function renderSection(section) {
   const main = $("#main");
   sectionHeading(main, `${section.step} · ${section.title}`, section.blurb, TIPS[section.id]);
-  castBar(main);
+  if (!section.scenario) castBar(main);
+
+  if (section.id === "psych") {
+    const auto = el("label", "toggle bigtoggle");
+    const box = el("input");
+    box.type = "checkbox";
+    box.checked = !!current().psychAuto;
+    box.onchange = () => { current().psychAuto = box.checked; save(); render(); };
+    auto.append(box, el("span", null, "Let the AI do this one for me"));
+    const wrap = el("div", "card");
+    wrap.append(auto);
+    const why = el("div", "fieldhead");
+    why.append(el("p", "help", "This is the hardest section to write. Leave it to the AI and it fills the whole profile from your lore and the personality you already wrote — you still see it in Review before it counts."));
+    why.append(tip("Needs AI assist switched on at step 0. The fields stay empty here and get written when you run Enhance the card."));
+    wrap.append(why);
+    main.append(wrap);
+    if (current().psychAuto) {
+      main.append(el("p", "note", state.ai.on
+        ? "Handing this section to the AI. Run Enhance the card when the rest is written."
+        : "AI assist is off — switch it on at step 0, or untick this and write the section yourself."));
+      return;
+    }
+  }
   if (state.characters.length > 1)
     main.append(el("p", "note", `Writing ${charName(who)} — character ${who + 1} of ${state.characters.length}.`));
   if (!section.exported) main.append(el("p", "note", "Not exported. This is yours to think in."));
@@ -365,8 +465,9 @@ function renderEmbeds() {
   main.append(el("p", "note", "[Name — age:XX;gender:X;appearance:tag,tag,tag,tag,tag,tag. One or two personality sentences.]"));
   state.embeds.forEach((value, index) => {
     const box = fieldBox(`embed${index}`, `Embed ${index + 1}`,
-      "One line. Name, age, gender, appearance tags, then a sentence or two.", value,
-      (v) => { state.embeds[index] = v; });
+      "One line. Name, age, gender, appearance tags, then a sentence or two. Write it however you like — it gets formatted for you on export.",
+      value, (v) => { state.embeds[index] = v; },
+      { placeholder: "Mark, 34, male, tall, grey at the temples, work boots, always early. Runs the garage on the corner and talks to everyone like they already agreed with him." });
     const del = el("button", "mini danger", "Remove");
     del.onclick = () => { state.embeds.splice(index, 1); save(); render(); };
     $(".fieldhead", box).append(del);
@@ -385,9 +486,12 @@ function renderRules() {
     const head = el("label", "toggle");
     const box = el("input");
     box.type = "checkbox";
-    box.checked = !!state.rules[rule.id];
+    const locked = rule.id === "rule21";
+    if (locked) { state.rules.rule21 = true; box.disabled = true; }
+    box.checked = locked ? true : !!state.rules[rule.id];
     box.onchange = () => { state.rules[rule.id] = box.checked; save(); renderRail(); };
     head.append(box, el("span", null, rule.name));
+    if (locked) head.append(el("span", "badge", "always on"));
     card.append(head);
     const why = el("div", "fieldhead");
     why.append(el("p", "help", rule.why));
@@ -401,7 +505,13 @@ function renderRules() {
 /* -------------------------------------------------------------- ai panel */
 function renderAI() {
   const main = $("#main");
-  sectionHeading(main, "AI assist", "Optional, and it runs at the end. Fill the card in your own words first — then the model rewrites it in the house style from the guide, and you keep both versions.", TIPS.ai);
+  sectionHeading(main, "AI assist", null, TIPS.ai);
+  const pitch = el("div", "card");
+  pitch.append(el("p", "blurb",
+    "Optional. Write your bot in plain english describe what you want in each of the previous sections then run Enhance the card at the end. The ai will take all of your fields, read what you wrote and then expand it."));
+  pitch.append(el("p", "warnline",
+    "It is HIGHLY reconmend that you DO NOT use this as is. Instead use this as your starting point, edit, rewrite, expand. If you publish a bot created entirely by AI people WILL noticed and they will NOT have a good time."));
+  main.append(pitch);
 
   if (!state.ai.on) {
     const off = el("div", "card");
@@ -529,6 +639,26 @@ function renderReview() {
   const main = $("#main");
   sectionHeading(main, "Review", "Your words on the left, the AI's on the right. Pick one per field — the one you pick is the one that exports.", TIPS.review);
 
+  const hits = allLintHits();
+  const check = el("div", "card" + (hits.length ? " warn" : ""));
+  const checkHead = el("div", "fieldhead");
+  checkHead.append(el("h3", null, hits.length
+    ? `${hits.length} thing${hits.length > 1 ? "s" : ""} to fix before this card is safe to publish`
+    : "Safety check passed"));
+  checkHead.append(tip(TIPS.lintflag));
+  check.append(checkHead);
+  if (hits.length) {
+    for (const hit of hits) {
+      const line = el("p", "help");
+      line.append(el("strong", null, `${hit.where}: `));
+      line.append(document.createTextNode(`“${hit.found.join("”, “")}” — ${hit.why}`));
+      check.append(line);
+    }
+  } else {
+    check.append(el("p", "help", "No child ages, no pre-adult words, nothing minor-coded — checked across every field, including anything the AI wrote."));
+  }
+  main.append(check);
+
   const pairs = [];
   state.characters.forEach((character, index) => {
     for (const section of SECTIONS) {
@@ -619,16 +749,12 @@ function renderExport() {
   const hits = allLintHits();
   if (hits.length) {
     const warn = el("div", "card warn");
-    warn.append(el("h3", null, `Step 0 — ${hits.length} thing${hits.length > 1 ? "s" : ""} to fix first`));
-    for (const hit of hits) {
-      const line = el("p", "help");
-      line.append(el("strong", null, `${hit.where}: `));
-      line.append(document.createTextNode(`“${hit.found.join("”, “")}” — ${hit.why}`));
-      warn.append(line);
-    }
+    warn.append(el("h3", null, `${hits.length} unresolved safety check${hits.length > 1 ? "s" : ""}`));
+    warn.append(el("p", "help", "Open Review to see each one in place."));
+    const jump = el("button", "go", "Go to Review");
+    jump.onclick = () => { activeSection = "review"; render(); };
+    warn.append(jump);
     main.append(warn);
-  } else {
-    main.append(el("p", "note ok", "Step 0 checks pass: no child ages, no pre-adult words, nothing minor-coded."));
   }
 
   const aiPicked = state.characters.reduce((n, c) => n + Object.values(c.choice).filter((v) => v === "ai").length, 0);
@@ -762,7 +888,6 @@ function download(filename, text) {
   URL.revokeObjectURL(url);
 }
 
-document.addEventListener("click", (e) => {
-  if (!e.target.closest(".qmark")) document.querySelectorAll(".qmark.open").forEach((m) => m.classList.remove("open"));
-});
+document.addEventListener("click", (e) => { if (!e.target.closest(".qmark")) hideTips(); });
+window.addEventListener("scroll", hideTips, true);
 render();
