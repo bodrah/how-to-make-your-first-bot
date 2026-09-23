@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER } from "./fields.js?v=c837192";
-import { VENDORS, parseReply, buildRequest } from "./ai.js?v=c837192";
-import { embedCard, toPngBytes } from "./png.js?v=c837192";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=19b627d";
+import { VENDORS, parseReply, buildRequest } from "./ai.js?v=19b627d";
+import { embedCard, toPngBytes } from "./png.js?v=19b627d";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -23,6 +23,7 @@ if (!state.characters) {
 state.characters.forEach((c) => { c.values ||= {}; c.enhanced ||= {}; c.choice ||= {}; });
 state.acts ||= [];
 state.trackers ||= {};
+state.tags ||= {};
 TRACKERS.filter((t) => t.mandatory).forEach((t) => { state.trackers[t.id] = true; });
 // Four acts is the shape of the method; older saves get topped up to four.
 while (state.acts.length < 4) state.acts.push({ title: "", text: "" });
@@ -238,6 +239,7 @@ const STEPS = [
   { id: "rules",    label: "Rules",       tip: () => TIPS.rules },
   { id: "trackers", label: "Trackers",    tip: () => TIPS.trackers },
   { id: "systems",  label: "Systems",     tip: () => TIPS.systems },
+  { id: "tags",     label: "Tags" },
   { id: "review",   label: "Review",      tip: () => TIPS.review },
   { id: "export",   label: "Export",      tip: () => TIPS.export },
 ];
@@ -283,6 +285,10 @@ function stepState(id) {
                               : Object.values(state.trackers).filter(Boolean).length;
     return { state: "done", count: String(on) };     // both always carry a mandatory block
   }
+  if (id === "tags") {
+    const on = Object.values(state.tags).filter(Boolean).length;
+    return { state: on ? "done" : "empty", count: String(on) };
+  }
   if (id === "ai") return { state: aiCount() ? "done" : "part", count: aiCount() ? String(aiCount()) : "" };
   if (id === "review") {
     if (allLintHits().length) return { state: "problem", count: String(allLintHits().length) };
@@ -320,7 +326,7 @@ function renderRail() {
       activeSection = step.id; render();
     };
     pill.append(go);
-    pill.append(tip(step.tip()));
+    if (step.tip) pill.append(tip(step.tip()));
     rail.append(pill);
   });
 
@@ -747,6 +753,31 @@ function renderTrackers() {
   main.append(el("p", "note", "The mandatory ones are built into every card and cannot be turned off. More trackers, and the hidden ones the bot keeps to itself, are coming later."));
 }
 
+function renderTags() {
+  const main = $("#main");
+  const head = el("div", "sectionhead");
+  head.append(el("h2", null, "Tags"));
+  main.append(head);
+  main.append(el("p", "blurb", "Tick what fits. These are the tags the sites know."));
+
+  for (const block of TAG_GROUPS) {
+    main.append(el("h3", "castheading", block.group));
+    const wrap = el("div", "tagwrap");
+    for (const name of block.tags) {
+      const on = !!state.tags[name];
+      const row = el("label", "tagpick" + (on ? " on" : ""));
+      const box = el("input");
+      box.type = "checkbox";
+      box.checked = on;
+      box.onchange = () => { state.tags[name] = box.checked; save(); render(); };
+      row.append(box);
+      row.append(el("span", null, name));
+      wrap.append(row);
+    }
+    main.append(wrap);
+  }
+}
+
 function renderSystems() {
   const main = $("#main");
   sectionHeading(main, "Systems", null, TIPS.systems);
@@ -1091,6 +1122,7 @@ function render() {
   else if (activeSection === "embeds") renderEmbeds();
   else if (activeSection === "rules") renderRules();
   else if (activeSection === "trackers") renderTrackers();
+  else if (activeSection === "tags") renderTags();
   else if (activeSection === "systems") renderSystems();
   else if (activeSection === "ai") renderAI();
   else if (activeSection === "review") renderReview();
@@ -1254,7 +1286,7 @@ function buildCardJson() {
     spec: "",
     spec_version: "",
     avatar: "",
-    tags: [],
+    tags: Object.keys(state.tags).filter((t) => state.tags[t]),
     state: 0,
     style: 1,
     nsfw: false,

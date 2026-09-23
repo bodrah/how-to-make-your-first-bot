@@ -303,6 +303,20 @@ button.mini.on { background: var(--acid); border-color: var(--acid); color: #052
 .enginehead { margin-top: 1.6rem; }
 .enginerule { border: 0; border-top: 1px solid var(--line); margin: 1.6rem 0 1.2rem; }
 
+/* ----------------------------------------------------------------- tags */
+.tagwrap {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+  gap: .35rem; margin: 0 0 1.3rem;
+}
+.tagpick {
+  display: flex; align-items: center; gap: .55rem; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--panel);
+  padding: .45rem .7rem; font-size: .92rem;
+}
+.tagpick:hover { border-color: var(--violet); }
+.tagpick.on { border-color: var(--acid); background: rgba(110,231,160,.06); }
+.tagpick input { width: auto; min-height: 0; accent-color: var(--acid); }
+
 /* ------------------------------------------------------------- trackers */
 .trackers { display: grid; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); gap: .5rem; }
 .trackrow {
