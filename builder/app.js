@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=7412c9f";
-import { VENDORS, parseReply, buildRequest } from "./ai.js?v=7412c9f";
-import { embedCard, toPngBytes } from "./png.js?v=7412c9f";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=d514cb6";
+import { VENDORS, parseReply, buildRequest } from "./ai.js?v=d514cb6";
+import { embedCard, toPngBytes } from "./png.js?v=d514cb6";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -372,6 +372,17 @@ function fieldBox(id, label, help, value, onInput, opts = {}) {
   head.append(tip(opts.tip || help));
   wrap.append(head);
   wrap.append(el("p", "help", help));
+  if (opts.choices) {
+    const picks = el("div", "choices");
+    for (const choice of opts.choices) {
+      const btn = el("button", "choice" + (value === choice ? " on" : ""), choice);
+      btn.type = "button";
+      btn.onclick = () => { onInput(choice); save(); render(); };
+      picks.append(btn);
+    }
+    wrap.append(picks);
+    return wrap;
+  }
   const input = el("textarea");
   if (opts.short) input.rows = 1;
   if (opts.placeholder) input.placeholder = opts.placeholder;   // clears the moment they type
@@ -408,6 +419,28 @@ function ageProblem() {
     if (lowest < 18) return `${charName(i)} is written as ${lowest}. Everyone in a card must be 18 or older — fix the age before moving on.`;
   }
   return "";
+}
+
+// Until a gender is picked, everything reads "them". Pick one and the wording
+// follows it — verbs included, so "how do they carry" becomes "how does she carry".
+const PRONOUNS = {
+  male:   { they: "he",   them: "him",  their: "his",   theirs: "his",    themself: "himself",
+            are: "is", were: "was", do: "does", s: "s", es: "es" },
+  female: { they: "she",  them: "her",  their: "her",   theirs: "hers",   themself: "herself",
+            are: "is", were: "was", do: "does", s: "s", es: "es" },
+  other:  { they: "they", them: "them", their: "their", theirs: "theirs", themself: "themself",
+            are: "are", were: "were", do: "do", s: "", es: "" },
+};
+
+function pronounsFor(character) {
+  const pick = ((character && character.values.gender) || "").trim().toLowerCase();
+  return PRONOUNS[pick] || PRONOUNS.other;
+}
+
+function swap(text, character) {
+  const words = pronounsFor(character);
+  return String(text).replace(/\{(they|them|their|theirs|themself|are|were|do|s|es)\}/g,
+    (_, key) => words[key]);
 }
 
 function sectionHeading(main, title, blurb, tipText) {
@@ -625,7 +658,7 @@ function renderSection(section) {
       engineOpen = false;
       main.append(el("hr", "enginerule"));
     }
-    main.append(fieldBox(id, label.replace(/^Plot engine · /, ""), help, current().values[id],
+    main.append(fieldBox(id, swap(label.replace(/^Plot engine · /, ""), current()), swap(help, current()), current().values[id],
       (v) => { current().values[id] = v; }, opts));
   }
 }
@@ -644,9 +677,9 @@ function renderSideChars() {
     head.append(del);
     card.append(head);
     for (const [key, help] of WPP_FIELDS)
-      card.append(fieldBox(`sc${index}.${key}`, key, help, character[key],
+      card.append(fieldBox(`sc${index}.${key}`, key, swap(help, null), character[key],
         (v) => { character[key] = v; }, { short: key.length < 12 }));
-    card.append(fieldBox(`sc${index}.closer`, "Closing paragraph", WPP_CLOSER, character.closer,
+    card.append(fieldBox(`sc${index}.closer`, "Closing paragraph", swap(WPP_CLOSER, null), character.closer,
       (v) => { character.closer = v; }));
     main.append(card);
   });
