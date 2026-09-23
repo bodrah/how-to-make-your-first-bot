@@ -1,7 +1,7 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=ef239601";
-import { VENDORS, buildFileRequest } from "./ai.js?v=ef239601";
-import { makeZip, textBytes } from "./zip.js?v=ef239601";
-import { embedCard, toPngBytes } from "./png.js?v=ef239601";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=cfce2981";
+import { VENDORS, buildFileRequest } from "./ai.js?v=cfce2981";
+import { makeZip, textBytes } from "./zip.js?v=cfce2981";
+import { embedCard, toPngBytes } from "./png.js?v=cfce2981";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -196,6 +196,15 @@ function aiBlock(rule) {
   return state.ai.on && written ? written : rule.text;
 }
 
+// What each act is for, so a blank one comes back as its own beat rather than
+// the whole story crammed into the first box.
+const ACT_BEATS = [
+  "how it starts and what pulls {{user}} in",
+  "the first real escalation, where it stops being simple",
+  "the point of no return, the thing that cannot be undone",
+  "what it costs, and where the story is left standing",
+];
+
 function greetingOut(character) {
   const own = (chosen("greeting", character) || "").trim();
   if (!own) return "";
@@ -211,6 +220,13 @@ function liveRules() {
 }
 
 function buildExport() {
+  const parts = buildParts();
+  return [parts.description, parts.instructions].filter(Boolean).join("\n\n");
+}
+
+// Who the character is, and what the model is told to do. Two piles, kept
+// apart, because the sites ask for them in two different boxes.
+function buildParts() {
   const blocks = [];
   state.characters.forEach((character, index) => {
     const name = chosen("first_name", character) || charName(index);
@@ -256,7 +272,8 @@ function buildExport() {
     const title = (act.title || "").trim();
     const body = (act.text || "").trim();
     if (!title && !body && !state.ai.on) return "";
-    return `#Act ${i + 1}${title ? " – " + title : state.ai.on && !title ? " – [name this act]" : ""}\n${body || (state.ai.on ? "[write this act]" : "")}`;
+    const beat = ACT_BEATS[i] || "what happens next";
+    return `#Act ${i + 1}${title ? " – " + title : state.ai.on && !title ? ` – [name act ${i + 1}]` : ""}\n${body || (state.ai.on ? `[write act ${i + 1} only — ${beat}. One short paragraph. Do not write any later act here.]` : "")}`;
   }).filter(Boolean).join("\n\n"));
   const world = [grab("world_setting") && `## Setting\n${grab("world_setting")}`,
                  grab("problem") && `## The problem\n${grab("problem")}`,
@@ -265,15 +282,20 @@ function buildExport() {
   if (grab("gated")) scenarioBits.push(`{ABSOLUTELY CRITICAL INFORMATION BELOW IS ONLY KNOWN BY the characters directly involved and no one else. It is never confessed. Anything the player learns must be earned slowly, through physical evidence, overheard moments, contradictions caught side by side, or somebody else talking:\n${grab("gated")}\n}`);
   for (const rule of liveRules().filter((r) => r.where === "scenario")) scenarioBits.push(aiBlock(rule));
   scenarioBits.push(MANDATORY_TRACKER);
-  if (scenarioBits.length) blocks.push(scenarioBits.join("\n\n"));
+  const instructions = [];
+  if (scenarioBits.length) instructions.push(scenarioBits.join("\n\n"));
 
   const embeds = state.embeds.filter((e) => e && e.trim()).map(formatEmbed);
   if (embeds.length) blocks.push(embeds.join("\n"));
   const rules = liveRules().filter((r) => !r.where).map((r) => r.text);
-  if (rules.length) blocks.push(rules.join("\n\n"));
+  if (rules.length) instructions.push(rules.join("\n\n"));
   const trackers = TRACKERS.filter((tr) => state.trackers[tr.id] && tr.text).map((tr) => tr.text);
-  if (trackers.length) blocks.push(trackers.join("\n"));
-  return blocks.join("\n\n");
+  if (trackers.length) instructions.push(trackers.join("\n"));
+
+  return {
+    description: blocks.filter(Boolean).join("\n\n"),
+    instructions: instructions.filter(Boolean).join("\n\n"),
+  };
 }
 
 /* ----------------------------------------------------------------- steps */
@@ -1152,9 +1174,10 @@ function renderReview() {
 function filePreview(main) {
   const card = el("div", "card");
   const head = el("div", "fieldhead");
-  head.append(el("h3", null, "The file as it stands"));
-  head.append(tip("Everything above, assembled. This is exactly what downloads at the last step."));
+  head.append(el("h3", null, "Your Character Card File"));
+  head.append(tip("This is the txt file that will be downloaded on the Export tab."));
   card.append(head);
+  card.append(el("p", "note", "Review the details below."));
   card.append(el("pre", "output", buildTxt()));
   const copy = el("button", "ghost", "Copy it");
   copy.onclick = async () => {
@@ -1612,11 +1635,10 @@ function buildTxt() {
   const first = state.characters[0];
   const name = chosen("first_name", first) || charName(0);
   const parts = splitExport();
-  const field = (n, title, where, body, note) => [
+  const field = (n, title, where, body) => [
     BANNER,
     `FIELD ${n} — ${title}`,
     `Paste into ${where}`,
-    ...(note ? [note] : []),
     BANNER,
     "",
     body || "[nothing written yet]",
@@ -1628,27 +1650,20 @@ function buildTxt() {
     `${name} — built with Skeletor's Bot Builder`,
     RULE, "",
     field(1, "NAME", "the Name field", name),
-    field(2, "DESCRIPTION", "the Description field", parts.blurb || "[your card page or blurb goes here]",
-          "(what a reader sees before they open the chat)"),
+    field(2, "DESCRIPTION / PERSONALITY", "the Description field", parts.description),
     field(3, "OPENING", "the Opening field", parts.greeting),
-    field(4, "INSTRUCTIONS", "the Instructions field", parts.instructions,
-          "(model only — not shown to readers)"),
+    field(4, "INSTRUCTIONS", "the Instructions field", parts.instructions),
   ].join("\n");
 }
 
 // Everything the card holds, split by where it belongs on a platform.
 function splitExport() {
-  const first = state.characters[0];
-  const full = buildExport();
-  const blocks = full.split("\n\n");
-  const scenarioStart = (b) => b.startsWith("[How to run this story") || b.startsWith("{Plot engine:")
-    || b.startsWith("#Act") || b.startsWith("# World Profile") || b.startsWith("{ABSOLUTELY");
+  const parts = buildParts();
   return {
-    instructions: full,
-    scenario: blocks.filter(scenarioStart).join("\n\n"),
-    description: blocks.filter((b) => !scenarioStart(b)).join("\n\n"),
-    greeting: greetingOut(first),
-    blurb: "",
+    description: parts.description,      // who they are — goes in Description
+    instructions: parts.instructions,    // how to run it — goes in Instructions
+    scenario: parts.instructions,
+    greeting: greetingOut(state.characters[0]),
   };
 }
 
