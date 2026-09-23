@@ -29,65 +29,82 @@ A non comprehensive list of things I avoid:
 - ❌ No sexual or romantic content anywhere near pre-adult years.
 - ❌ No minor-coded language anywhere.
 
-## Step 1 - Character Background
+## Step 1 - Your character's lore
 
-I use AI to help me answer all of these questions when I make my lore bible for any new character I create.
+I use AI to help me answer all of these questions when I make my lore bible for any new character I create. The name, the gender, the age and the appearance go in first - everything below them is the lore, and it is what the AI reads before it writes your fields.
 
-#### The seed
-- What is the core of this character? One line. A premise, a job, a wound, an image.
+#### Name
+- What they are called. First name, full name, a handle — whatever people use for them. Used everywhere, with or without AI assist.
+
+#### Gender
+- Male, female, or other. Everything below changes to match.
+
+#### Age
+- A number, and it must be 18 or older. Apparent age plus real age if they differ.
+
+#### Appearance
+- Height, build, skin, hair, eyes, face, what they wear, what they carry.
+
+#### The premise
+- What is the core of this character?
+- One line. A premise, a job, a wound, an image.
 
 #### The defining wound
-- What is the one thing that shaped who she is now?
+- What is the one thing that shaped who they are now?
 
-#### The name
-- Pick one from four to six grounded options I offer. Or give me yours.
-
-#### The people around her
-- Who protected her or taught her? Street or not street?
-- Did she have one friend? Alive or gone?
+#### The people around them
+- Who protected them or taught them?
+- Street or not street?
+- Did they have one friend?
+- Alive or gone?
 - Family, in broad strokes. Warm or cold. Present or absent.
 
 #### Roots
-- Where does she come from? What was home like?
-- How did that place shape the way she survives? Fight, charm, hide, disappear?
+- Where do they come from?
+- What was home like?
+- How did that place shape the way they survive?
+- Fight, charm, hide, disappear?
 
 #### The adversity
-- What is one hardship she remembers? Who was the antagonist? Name that person.
-- What is the one thing that got through to her in that time?
+- What is one hardship they remember?
+- Who was the antagonist?
+- Name that person. What is the one thing that got through to them in that time?
 
 #### The warm one
 - Who was the one good early relationship?
-- Where did her skill or her identity come from?
+- Where did their skill or their identity come from?
 - What was the loss that marked the end of that time?
 
-#### The one thing that was hers
-- What was her private refuge, skill, or passion? Did she hide it? Why?
+#### The one thing that was theirs
+- What was their private refuge, skill, or passion?
+- Did they hide it?
+- Why?
 
 #### Academics
-- Did she struggle, coast, or excel? How was she treated?
-- Was there one instructor who saw something in her? Name that person.
+- Did they struggle, coast, or excel?
+- How were they treated?
+- Was there one instructor who saw something in them?
+- Name that person.
 
-#### The pull of her world
-- Did the world she grew up in try to take her too? Who kept her out?
-
-#### The gaps
-- Here is what is still thin. Which of these do you want to fill? Family beyond parents. A friend or deliberate isolation. The source of her skill. One before/after event. One bright spot.
+#### Getting pulled in
+- The place they grew up in ran on something — a family trade, a gang, a church, drink, money owed.
+- Did it try to make them part of it?
+- Who kept them out of it, or did nobody?
 
 #### The turn
-- What is the adult wound, 18 or older? What was asked of her, what did it cost, what did it break? Stated, not shown.
+- What is the adult wound, 18 or older?
+- What was asked of them, what did it cost, what did it break?
+- Stated, not shown.
 
 #### The fall
-- How did the turn cascade into where she is now?
+- How did the turn cascade into where they are now?
 
-#### Now
-- What is her current state?
-- What is the one good thing in her life right now?
-- How does she relate to the thing she lost?
+#### Now, on the outside
+- {Their} life as it stands: where they live, how they pay for it, who is around. And the one good thing in it.
 
-#### The interior
-- How does she carry the wound today?
-- How is she during intimacy?
-- What does she see when she looks at herself? One insecurity. One want.
+#### Now, on the inside
+- The same day from the inside: how the wound sits now, how they are during intimacy, what they see looking at themself.
+- One insecurity. One want.
 
 #### Secrets
 - Which of the buried facts go in the gated block for the card?
@@ -101,14 +118,13 @@ Short concise who they are goes here.
 First name: The name they go by.
 Age: A number. Apparent age plus real age if they differ.
 Appearance: Height, build, skin, hair, eyes, face, what they wear, what they carry.
-Background: The cover story they tell people. Where they came from and how they got here. No secrets.
 Likes and Hobbies: Real things a person would name out loud. Plain list.
 Dislikes: Real things a person would name out loud. Plain list.
 Personality: How they act with anyone, in any room. Observable behavior, not mood words.
 Core Drive: The one thing they want most, and what they will do to get it.
-Voice: How they sound. Pitch, pace, volume, accent. Ends with one short line in their voice.
+Voice: How they sound. Pitch, pace, volume, accent. Ends with one short line in their voice. Stuck? Name an actor or character who sounds right and the AI adapts the qualities of that voice without referencing the work.
 Dynamics with {{user}}: How they treat the player across the whole story. Not the first message.
-Dynamics with [each other named character]: How they treat that person. One line each.
+Dynamics with [each named character]: How they treat that person. One line each, one per row.
 Dynamics with everyone else: How they treat strangers, friends, enemies.
 Response to romance: How they react when someone wants them.
 Sexual Desires / Kinks: What they like in bed. Plain list.
@@ -132,26 +148,11 @@ Prognosis: Where their life goes if nothing changes.
 ]
 ```
 
-Facts, things that doesn't need explaining
-
-```text
-[[Name] Facts:
-Likes:
-Small concrete things. Food, drink, weather, habits.
-Hates:
-Small concrete things. Sounds, smells, kinds of people.
-Believes:
-Opinions they hold. Religion, luck, people, money.
-Knows:
-Skills they have. Practical things they can do.
-]
-```
-
-> **Wow Skeletor thats a lot**
+Wow Skeletor thats a lot**
 >
 > Yes yes it is.
 
-> **Okay but should I really restate the same thing 3 times?**
+> **Okay but should I really restate the same thing twice?**
 >
 > Maybe? This is what I found keeps my characters stable for a long time. So it works for me. Maybe it will work for you.
 
