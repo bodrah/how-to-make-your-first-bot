@@ -186,8 +186,7 @@ button.mini.on { background: var(--rust); border-color: var(--rust); color: #fff
 /* the rail: numbered stops, scrollable sideways on a phone */
 .rail {
   display: flex; gap: .35rem .4rem; align-items: stretch; flex-wrap: wrap;
-  padding: .3rem 1.4rem .7rem;
-  max-width: 1180px; margin: 0 auto;
+  padding: 0; margin: 0;
 }
 .pill {
   display: flex; align-items: center; gap: .3rem; flex: 0 0 auto;
@@ -227,7 +226,7 @@ main {
 
 @media (max-width: 700px) {
   .mastrow { padding: .6rem .9rem .4rem; }
-  .rail { padding: .3rem .9rem .6rem; }
+  .railrow { padding: .3rem .9rem .6rem; }
   main { padding: 1.2rem .9rem 6.5rem; }
   .pilllabel { display: none; }        /* numbers only when space is tight */
   .progress { font-size: .74rem; }
@@ -248,9 +247,14 @@ body {
   box-shadow: 0 1px 0 rgba(110,231,160,.12);
 }
 .mastrow h1 span { color: var(--acid); text-shadow: 0 0 14px rgba(110,231,160,.45); }
+.railrow {
+  display: flex; align-items: stretch; gap: .75rem;
+  padding: .3rem 1.4rem .7rem; max-width: 1180px; margin: 0 auto;
+}
+.railrow .rail { flex: 1; }
 .mastmark {
-  width: 34px; height: 34px; border-radius: 8px; object-fit: cover;
-  border: 1px solid var(--line); margin-right: .6rem; vertical-align: middle;
+  width: 72px; align-self: stretch; height: auto; object-fit: cover;
+  border-radius: 10px; border: 1px solid var(--line); flex: none;
 }
 .mastrow h1 { display: flex; align-items: center; }
 
