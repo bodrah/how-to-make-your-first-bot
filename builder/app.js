@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS } from "./fields.js?v=c7a0384";
-import { VENDORS, parseReply, buildRequest } from "./ai.js?v=c7a0384";
-import { embedCard, toPngBytes } from "./png.js?v=c7a0384";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS } from "./fields.js?v=ec849b3";
+import { VENDORS, parseReply, buildRequest } from "./ai.js?v=ec849b3";
+import { embedCard, toPngBytes } from "./png.js?v=ec849b3";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -436,7 +436,7 @@ function portraitBox() {
   head.append(el("label", null, "Picture (optional)"));
   head.append(tip("Two uses. With AI assist on, the model looks at it while writing appearance. On export it becomes the SillyTavern card image, with the character data written inside the file."));
   card.append(head);
-  card.append(el("p", "help", "A portrait of this character. Stays on your device — it is sent to the AI only when you run Enhance, and only to the vendor you picked."));
+  card.append(el("p", "help", "A portrait of this character. Stays on your device — it is sent to the AI only when you run Enhance, and only to the vendor you picked. It also becomes the face of the card you export."));
 
   const row = el("div", "portraitrow");
   const preview = el("div", "shot");
@@ -538,7 +538,7 @@ function renderSection(section) {
   sectionHeading(main, `${section.step} · ${section.title}`, section.blurb, TIPS[section.id]);
   if (!section.scenario) castBar(main);
 
-  if (section.id === "profile") main.append(portraitBox());
+  if (section.id === "bible") main.append(portraitBox());
 
   if (section.scenario) {
     const fixed = el("div", "card");
@@ -961,63 +961,69 @@ function renderExport() {
   const aiPicked = state.characters.reduce((n, c) => n + Object.values(c.choice).filter((v) => v === "ai").length, 0);
   if (aiCount()) main.append(el("p", "note", `${aiPicked} field${aiPicked === 1 ? "" : "s"} exporting the AI version. Change any of them in Review.`));
 
+  const who = state.characters[0];
+  const name = chosen("first_name", who) || charName(0);
+  const usedAI = aiCount() > 0;
+
+  const box = el("div", "card");
+  const boxHead = el("div", "fieldhead");
+  boxHead.append(el("h3", null, "Download"));
+  boxHead.append(tip(usedAI
+    ? "You used AI assist, so you get the text file plus a card file: a .png when you added a picture, a .json when you did not."
+    : "A text file with every field laid out in the order a platform asks for them, ready to paste."));
+  box.append(boxHead);
+
+  const what = usedAI
+    ? (who.image
+        ? `Two files: ${name}.txt to paste from, and ${name}.png — the picture with the card written inside it.`
+        : `Two files: ${name}.txt to paste from, and ${name}.json for anything that imports cards. Add a picture on step 1 to get a .png card instead.`)
+    : `One file: ${name}.txt, with each field laid out and labelled for pasting.`;
+  box.append(el("p", "help", what));
+
+  const grab = el("button", "go", usedAI ? "Download both files" : "Download the text file");
+  grab.onclick = async () => {
+    grab.disabled = true;
+    try {
+      download(`${name}.txt`, buildTxt());
+      if (usedAI) {
+        if (who.image) {
+          const png = await toPngBytes(who.image);
+          downloadBytes(`${name}.png`, embedCard(png, buildCardJson()), "image/png");
+        } else {
+          download(`${name}.json`, JSON.stringify(buildCardJson(), null, 2));
+        }
+      }
+      status(usedAI ? "Both files saved." : "Saved.");
+    } catch (err) { status(err.message, true); }
+    finally { grab.disabled = false; }
+  };
+  box.append(grab);
+  main.append(box);
+
   const text = buildExport();
   main.append(el("pre", "output", text || "Nothing written yet."));
 
-  // SillyTavern card: the picture with the character written inside it
-  const cardBox = el("div", "card");
-  const cardHead = el("div", "fieldhead");
-  cardHead.append(el("h3", null, "SillyTavern card"));
-  cardHead.append(tip("A PNG with the character data written into the file itself. Drop it into SillyTavern, Chub, or anything that reads character cards — the picture is the card."));
-  cardBox.append(cardHead);
-  const who = state.characters[0];
-  if (!who.image) {
-    cardBox.append(el("p", "help", "Add a picture on the Personality step and this turns into a downloadable card."));
-  } else {
-    cardBox.append(el("p", "help", `Uses ${charName(0)}'s picture, with the card text, scenario and opening message written inside the file.`));
-    const make = el("button", "go", "Download SillyTavern card (.png)");
-    make.onclick = async () => {
-      make.disabled = true; make.textContent = "Building…";
-      try {
-        const png = await toPngBytes(who.image);
-        const withCard = embedCard(png, buildCardJson());
-        const url = URL.createObjectURL(new Blob([withCard], { type: "image/png" }));
-        const link = el("a");
-        link.href = url;
-        link.download = `${chosen("first_name", who) || "character"}.png`;
-        link.click();
-        URL.revokeObjectURL(url);
-        status("Card saved. Import it straight into SillyTavern.");
-      } catch (err) {
-        status(err.message, true);
-      } finally { make.disabled = false; make.textContent = "Download SillyTavern card (.png)"; }
-    };
-    cardBox.append(make);
-  }
-  main.append(cardBox);
-
   const buttons = el("div", "row buttons");
-  const copy = el("button", "go", "Copy");
+  const copy = el("button", "ghost", "Copy the card text");
   copy.onclick = async () => {
     await navigator.clipboard.writeText(text);
     copy.textContent = "Copied";
-    setTimeout(() => (copy.textContent = "Copy"), 1500);
+    setTimeout(() => (copy.textContent = "Copy the card text"), 1500);
   };
-  const txt = el("button", "ghost", "Download .txt");
-  txt.onclick = () => download(`${chosen("first_name") || "character"}.txt`, text);
-  const json = el("button", "ghost", "Download .json");
-  json.onclick = () => download(`${chosen("first_name") || "character"}.json`, JSON.stringify(state, null, 2));
+  const save = el("button", "ghost", "Save your work (.json)");
+  save.onclick = () => download(`${name}-builder-save.json`, JSON.stringify(state, null, 2));
   const wipe = el("button", "ghost danger", "Start over");
   wipe.onclick = () => {
     if (!confirm("Erase everything in this builder and start a new character?")) return;
     localStorage.removeItem(STORE);
     location.reload();
   };
-  buttons.append(copy, txt, json, wipe);
+  buttons.append(copy, save, wipe);
   main.append(buttons);
+
   const note = el("div", "fieldhead");
-  note.append(el("p", "help", "Downloads save to your device. The .json reloads into this builder later."));
-  note.append(tip("The .txt is the card itself, ready to paste into the platform. The .json is a save file — it holds both versions of every field."));
+  note.append(el("p", "help", "Everything saves to your device. Nothing is uploaded."));
+  note.append(tip("Save your work keeps both versions of every field so you can carry on later; it is not the card itself."));
   main.append(note);
 }
 
@@ -1131,13 +1137,61 @@ function plotEngine(character, name) {
   return `{Plot engine: All manner of things live in ${place || "this place"}, ${who || "its people"}, and something is always about to happen. Do not let {{user}} fall into an endless sex loop. ${cap(place || "the place")} keeps moving whether or not {{user}} acts. ${name} wants ${goal || "what they are after"}, and their goal is to have {{user}} help them get it. Create ${things ? handle : "jobs, people, and problems for"} {{user}} to handle, with and without ${name} present. ${cap(threat || "the threat")} works the whole time. When {{user}} is idle, ${cost || "it costs them something"}. Create plots that lead toward what ${name} hides, so {{user}} can progress the plot through events. If {{user}} gets stuck having sex with ${name}, ${name} ends it and moves the story on. Regarding sex, create complications and let ${name} refuse on their own terms, because they decide when, never {{user}}. You have failed as GameMaster if you are not giving {{user}} things to do, people to deal with, and a place to move through beyond their bed.}`;
 }
 
+const BANNER = "━".repeat(60);
+const RULE = "─".repeat(60);
+
+// A paste-ready file: one block per platform field, in the order the site asks
+// for them, so nobody has to work out which part goes where.
+function buildTxt() {
+  const first = state.characters[0];
+  const name = chosen("first_name", first) || charName(0);
+  const parts = splitExport();
+  const field = (n, title, where, body, note) => [
+    BANNER,
+    `FIELD ${n} — ${title}`,
+    `Paste into ${where}`,
+    ...(note ? [note] : []),
+    BANNER,
+    "",
+    body || "[nothing written yet]",
+    "",
+  ].join("\n");
+
+  return [
+    "CHARACTER CARD EXPORT",
+    `${name} — built with Skeletor's Bot Builder`,
+    RULE, "",
+    field(1, "NAME", "the Name field", name),
+    field(2, "DESCRIPTION", "the Description field", parts.blurb || "[your card page or blurb goes here]",
+          "(what a reader sees before they open the chat)"),
+    field(3, "OPENING", "the Opening field", parts.greeting),
+    field(4, "INSTRUCTIONS", "the Instructions field", parts.instructions,
+          "(model only — not shown to readers)"),
+  ].join("\n");
+}
+
+// Everything the card holds, split by where it belongs on a platform.
+function splitExport() {
+  const first = state.characters[0];
+  const full = buildExport();
+  const blocks = full.split("\n\n");
+  const scenarioStart = (b) => b.startsWith("[How to run this story") || b.startsWith("{Plot engine:")
+    || b.startsWith("#Act") || b.startsWith("# World Profile") || b.startsWith("{ABSOLUTELY");
+  return {
+    instructions: full,
+    scenario: blocks.filter(scenarioStart).join("\n\n"),
+    description: blocks.filter((b) => !scenarioStart(b)).join("\n\n"),
+    greeting: (chosen("greeting", first) || "").trim(),
+    blurb: "",
+  };
+}
+
 function buildCardJson() {
   const first = state.characters[0];
   const grab = (id) => (chosen(id, first) || "").trim();
-  const scenarioText = buildExport().split("\n\n").filter((b) =>
-    b.startsWith("[How to run this story") || b.startsWith("#") || b.startsWith("{ABSOLUTELY")).join("\n\n");
-  const description = buildExport().split("\n\n").filter((b) =>
-    !(b.startsWith("[How to run this story") || b.startsWith("#") || b.startsWith("{ABSOLUTELY"))).join("\n\n");
+  const parts = splitExport();
+  const scenarioText = parts.scenario;
+  const description = parts.description;
 
   const data = {
     name: chosen("first_name", first) || charName(0),
@@ -1156,6 +1210,15 @@ function buildCardJson() {
     extensions: {},
   };
   return { spec: "chara_card_v3", spec_version: "3.0", data };
+}
+
+function downloadBytes(filename, bytes, type) {
+  const url = URL.createObjectURL(new Blob([bytes], { type }));
+  const link = el("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 function download(filename, text) {
