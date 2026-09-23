@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS } from "./fields.js?v=ec849b3";
-import { VENDORS, parseReply, buildRequest } from "./ai.js?v=ec849b3";
-import { embedCard, toPngBytes } from "./png.js?v=ec849b3";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS } from "./fields.js?v=6e2e68d";
+import { VENDORS, parseReply, buildRequest } from "./ai.js?v=6e2e68d";
+import { embedCard, toPngBytes } from "./png.js?v=6e2e68d";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -555,16 +555,11 @@ function renderSection(section) {
   }
 
   if (section.id === "psych") {
-    const auto = el("label", "toggle bigtoggle");
-    const box = el("input");
-    box.type = "checkbox";
-    box.checked = !!current().psychAuto;
-    box.onchange = () => { current().psychAuto = box.checked; save(); render(); };
-    auto.append(box, el("span", null, "Let the AI do this one for me"));
     const wrap = el("div", "card");
-    wrap.append(auto);
+    wrap.append(toggleSwitch("Let the AI do this one for me", !!current().psychAuto,
+      (on) => { current().psychAuto = on; save(); render(); }));
     const why = el("div", "fieldhead");
-    why.append(el("p", "help", "This is the hardest section to write. Leave it to the AI and it fills the whole profile from your lore and the personality you already wrote — you still see it in Review before it counts."));
+    why.append(el("p", "help", "This is the hardest section to write. Leave it to the AI and it fills the whole profile from your lore and the personality you already wrote — you still see it in Review before you download it."));
     why.append(tip("Needs AI assist switched on at step 0. The fields stay empty here and get written when you run Enhance the card."));
     wrap.append(why);
     main.append(wrap);
@@ -665,6 +660,19 @@ function renderRules() {
     card.append(el("pre", null, rule.text));
     main.append(card);
   }
+}
+
+// The same switch as the AI step, for anywhere a real toggle belongs.
+function toggleSwitch(label, checked, onChange) {
+  const wrap = el("div", "switchrow");
+  const sw = el("button", "switch" + (checked ? " on" : ""));
+  sw.type = "button";
+  sw.append(el("span", "switchtrack"));
+  sw.append(el("span", "switchword", checked ? "on" : "off"));
+  sw.onclick = () => onChange(!checked);
+  wrap.append(sw);
+  wrap.append(el("span", "switchlabel", label));
+  return wrap;
 }
 
 function renderTrackers() {
