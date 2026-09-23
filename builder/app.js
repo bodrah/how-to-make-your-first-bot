@@ -1,7 +1,7 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=03a00aaa";
-import { VENDORS, buildFileRequest } from "./ai.js?v=03a00aaa";
-import { makeZip, textBytes } from "./zip.js?v=03a00aaa";
-import { embedCard, toPngBytes } from "./png.js?v=03a00aaa";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=264d0f6d";
+import { VENDORS, buildFileRequest } from "./ai.js?v=264d0f6d";
+import { makeZip, textBytes } from "./zip.js?v=264d0f6d";
+import { embedCard, toPngBytes } from "./png.js?v=264d0f6d";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -1555,8 +1555,9 @@ function readReturnedFile(reply) {
   // against the labels we asked for, so a model that reformats the header,
   // drops it, or answers before echoing the file still lands in the fields.
   const asked = {};
-  for (const [id, label] of SECTIONS.find((s) => s.scenario).fields)
-    asked[swap(label, state.characters[0]).toLowerCase()] = id;
+  for (const section of SECTIONS)
+    for (const [id, label] of section.fields)
+      asked[swap(label, state.characters[0]).toLowerCase()] = id;
   for (const line of text.split("\n")) {
     const pair = line.match(/^\s*(.+?):\s*(.+?)\s*$/);
     if (!pair) continue;
@@ -1629,13 +1630,22 @@ const RULE = "─".repeat(60);
 // A paste-ready file: one block per platform field, in the order the site asks
 // for them, so nobody has to work out which part goes where.
 // One line per field the author left blank, so the model has somewhere to
-// write them. Only ever sent to the model — never part of the download.
+// write them. An empty field prints nothing in the card, so without this the
+// model never sees that it was asked for. Only ever sent to the model —
+// never part of the download.
 function blanksSheet() {
   const character = state.characters[0];
-  const wanted = SECTIONS.find((s) => s.scenario).fields
-    .filter(([id, , , opts = {}]) => !opts.ownStep && !(chosen(id, character) || "").trim());
-  if (!wanted.length) return "";
-  const lines = wanted.map(([, label, help]) => `${swap(label, character)}: [FILL: ${swap(help, character)}]`);
+  const lines = [];
+  for (const section of SECTIONS) {
+    if (!section.exported) continue;
+    for (const [id, label, help, opts = {}] of section.fields) {
+      // the name, the gender and the age are the author's to decide
+      if (opts.always && id !== "appearance") continue;
+      if ((chosen(id, character) || "").trim()) continue;
+      lines.push(`${swap(label, character)}: [FILL: ${swap(help, character)}]`);
+    }
+  }
+  if (!lines.length) return "";
   return [
     "[BLANKS — the author left these empty. Fill every line: replace each [FILL: ...] with your own writing, a sentence or two, keep the label and the colon. The tool folds these into the card and deletes this block, so it never reaches the player.]",
     ...lines,
