@@ -85,7 +85,7 @@ const TIPS = {
   side: "W++ sheets for characters who need depth but not a full build — big enough to matter, small enough not to be the lead.",
   embeds: "One-liners for throwaway characters. Defining them stops the model inventing someone inconsistent, and it lets a lorebook hook onto the name.",
   rules: "Optional blocks you paste with the card. Tick only the ones a build actually needs.",
-  ai: "Optional. Write your bot in plain english describe what you want in each of the previous sections then run Enhance the card at the end. The ai will take all of your fields, read what you wrote and then expand it. It is HIGHLY reconmend that you DO NOT use this as is. Instead use this as your starting point, edit, rewrite, expand. If you publish a bot created entirely by AI people WILL noticed and they will NOT have a good time.",
+  ai: "Optional. Write your bot in plain english, describe what you want in each of the previous sections, then run Enhance the card at the end. The AI takes all of your fields, reads what you wrote, and expands it. You do not use what it gives you as is — it is your starting point.",
   scenario: "The story around the character — how it is run, the acts, the world, and the part the player has to earn instead of being told.",
   review: "Your version and the AI's version, side by side. Nothing is replaced — you pick which one exports, field by field.",
   export: "The finished card, assembled in the formats from the guide. Copy it, or save it to carry on later.",
@@ -510,7 +510,7 @@ function renderAI() {
   pitch.append(el("p", "blurb",
     "Optional. Write your bot in plain english describe what you want in each of the previous sections then run Enhance the card at the end. The ai will take all of your fields, read what you wrote and then expand it."));
   pitch.append(el("p", "warnline",
-    "It is HIGHLY reconmend that you DO NOT use this as is. Instead use this as your starting point, edit, rewrite, expand. If you publish a bot created entirely by AI people WILL noticed and they will NOT have a good time."));
+    "You do not use what the AI assist gives you as is. Instead use it as your starting point — edit, rewrite, expand. If you publish a bot created entirely by AI, people WILL notice, and they will NOT have a good time."));
   main.append(pitch);
 
   if (!state.ai.on) {
