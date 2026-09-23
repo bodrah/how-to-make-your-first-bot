@@ -11,7 +11,8 @@ export const SECTIONS = [
     fields: [
       ["first_name", "Name", "What they are called. First name, full name, a handle — whatever people use for them. Used everywhere, with or without AI assist.",
         { line: "Name", short: true, placeholder: "Belle", always: true }],
-      ["seed", "The seed", "What is the core of this character? One line. A premise, a job, a wound, an image."],
+      ["seed", "The premise", "What is the core of this character? One line. A premise, a job, a wound, an image.",
+        { tip: "The short version of who this is, before any detail — what you would say if somebody asked and you had one sentence." }],
       ["wound", "The defining wound", "What is the one thing that shaped who she is now?"],
       ["name_options", "The name", "Pick one from four to six grounded options I offer. Or give me yours."],
       ["people", "The people around her", "Who protected her or taught her? Street or not street? Did she have one friend? Alive or gone? Family, in broad strokes. Warm or cold. Present or absent."],
