@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=2e5ce44";
-import { VENDORS, buildFileRequest } from "./ai.js?v=2e5ce44";
-import { embedCard, toPngBytes } from "./png.js?v=2e5ce44";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=4bacbae";
+import { VENDORS, buildFileRequest } from "./ai.js?v=4bacbae";
+import { embedCard, toPngBytes } from "./png.js?v=4bacbae";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -185,7 +185,7 @@ function greetingOut(character) {
   const own = (chosen("greeting", character) || "").trim();
   if (!own) return "";
   const lines = TRACKERS.filter((t) => state.trackers[t.id] && t.greeting)
-    .map((t) => `---\n${t.greeting}`);
+    .map((t) => `---\n\n${t.greeting}`);
   return lines.length ? `${own}\n\n${lines.join("\n\n")}` : own;
 }
 
@@ -752,7 +752,7 @@ function renderGreeting() {
   note.append(el("h3", null, "Added to the end for you"));
   note.append(el("p", "help", "Write the opening however you like. On export, the trackers you ticked are appended underneath it, ready for you to fill in with the real values for this first scene."));
   const shown = TRACKERS.filter((t) => state.trackers[t.id] && t.greeting);
-  if (shown.length) note.append(el("pre", null, shown.map((t) => `---\n${t.greeting}`).join("\n\n")));
+  if (shown.length) note.append(el("pre", null, shown.map((t) => `---\n\n${t.greeting}`).join("\n\n")));
   main.append(note);
 }
 

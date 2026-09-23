@@ -222,6 +222,7 @@ End EVERY response with current scene state:
 ⌚ Time: MM/DD/YYYY HH:MM AM/PM
 
 ---
+
 🤼
 (List every non-user character present, one per line, using the stat format.)
 Name; ♀ or ♂; ⧗ age; 📏 height; ☮ role/relationship to {{user}}; 👚 current clothing/state of dress; ☠ current position, posture, and action
