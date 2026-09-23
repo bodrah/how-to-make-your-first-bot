@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER } from "./fields.js?v=1392648";
-import { VENDORS, parseReply, buildRequest } from "./ai.js?v=1392648";
-import { embedCard, toPngBytes } from "./png.js?v=1392648";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER } from "./fields.js?v=88bc0df";
+import { VENDORS, parseReply, buildRequest } from "./ai.js?v=88bc0df";
+import { embedCard, toPngBytes } from "./png.js?v=88bc0df";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -145,7 +145,6 @@ function nameField() {
 function fieldLine(spec, value) {
   const [, , , opts = {}] = spec;
   if (!value || !value.trim() || opts.cardOnly) return null;
-  if (!opts.line) return opts.perLine ? fieldLineList(opts, value) : null;
   if (opts.perLine) {
     return value.split("\n").filter((l) => l.trim()).map((l) => `${opts.perLine}${l.trim()}`).join("\n");
   }
