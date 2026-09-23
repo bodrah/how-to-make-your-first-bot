@@ -1,7 +1,7 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=fe1b9373";
-import { VENDORS, buildFileRequest } from "./ai.js?v=fe1b9373";
-import { makeZip, textBytes } from "./zip.js?v=fe1b9373";
-import { embedCard, toPngBytes } from "./png.js?v=fe1b9373";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=fa09be68";
+import { VENDORS, buildFileRequest } from "./ai.js?v=fa09be68";
+import { makeZip, textBytes } from "./zip.js?v=fa09be68";
+import { embedCard, toPngBytes } from "./png.js?v=fa09be68";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -1421,11 +1421,13 @@ async function enhanceAll(button) {
       { baseUrl: state.ai.baseUrl, image: image ? image.image : null });
 
     const written = readReturnedFile(reply);
-    if (!written) throw new Error("The model sent back something this builder could not read. Try again, or try a stronger model.");
+    if (!written && !lastKept) throw new Error("The model sent back something this builder could not read. Try again, or try a stronger model.");
     save();
     activeSection = "review";
     render();
-    status(`${written} field${written === 1 ? "" : "s"} came back. Yours are untouched — compare them and pick.`);
+    status(written
+      ? `${written} field${written === 1 ? "" : "s"} came back${lastKept ? `, and ${lastKept} the AI had already written were left alone` : ""}. Yours are untouched — compare them and pick.`
+      : `Nothing new to write — the ${lastKept} field${lastKept === 1 ? "" : "s"} the AI had already written were left alone.`);
   } catch (err) {
     status(err.message, true);
     save();
@@ -1462,6 +1464,8 @@ function lineMap(sectionId) {
 
 // Read the file the model sent back. Same shape as the one it was given, so
 // every "Label: value" line goes back to the field it came from.
+let lastKept = 0;
+
 function readReturnedFile(reply) {
   const text = String(reply || "").replace(/```[a-z]*\n?/gi, "");
   let map = lineMap("profile");
@@ -1472,10 +1476,14 @@ function readReturnedFile(reply) {
     return match ? match[1].trim() : "";
   };
 
+  let kept = 0;
   const set = (character, id, value) => {
     const clean = String(value || "").trim();
     if (!clean || !id) return;
-    const own = (chosen(id, character) || "").trim();
+    // A second run fills the gaps. Anything the AI already wrote stays put,
+    // so going back for a section you forgot cannot wipe the rest.
+    if ((character.enhanced[id] || "").trim()) { kept++; return; }
+    const own = (character.values[id] || "").trim();
     if (clean === own) return;                       // unchanged, nothing to compare
     character.enhanced[id] = clean;
     if (!character.choice[id]) character.choice[id] = "mine";
@@ -1519,12 +1527,14 @@ function readReturnedFile(reply) {
   }
   flush();
 
+  lastKept = kept;
+
   const engineAt = text.indexOf("{Plot engine:");
   if (engineAt >= 0) {
     const close = text.indexOf("}", engineAt);
     if (close > 0) {
       const block = text.slice(engineAt, close + 1).trim();
-      if (!block.includes("[the place this story happens]") && block !== state.aiBlocks.plotengine) {
+      if (!state.aiBlocks.plotengine && !block.includes("[the place this story happens]")) {
         state.aiBlocks.plotengine = block;
         written++;
       }
@@ -1548,6 +1558,7 @@ function readReturnedFile(reply) {
   }
 
   for (const rule of RULES.filter((r) => r.aiOnly && state.rules[r.id])) {
+    if (state.aiBlocks[rule.id]) continue;          // written on an earlier run
     const filledIn = captureBlocks(text, rule.text);
     if (filledIn && filledIn !== rule.text) { state.aiBlocks[rule.id] = filledIn; written++; }
   }
