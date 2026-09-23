@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=69bf652";
-import { VENDORS, buildFileRequest } from "./ai.js?v=69bf652";
-import { embedCard, toPngBytes } from "./png.js?v=69bf652";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=a722eb1";
+import { VENDORS, buildFileRequest } from "./ai.js?v=a722eb1";
+import { embedCard, toPngBytes } from "./png.js?v=a722eb1";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -792,9 +792,17 @@ function renderRules() {
     why.append(el("p", "help", rule.why));
     why.append(tip(`Ticking this adds the block below to the end of your exported card, word for word.`));
     card.append(why);
-    card.append(el("pre", null, rule.text));
+    card.append(el("pre", "rulebox", rule.text));
     main.append(card);
   }
+  // They are reference, not reading. Every block gets the height of the
+  // shortest one and scrolls inside that.
+  requestAnimationFrame(() => {
+    const boxes = [...main.querySelectorAll(".rulebox")];
+    if (boxes.length < 2) return;
+    const shortest = Math.min(...boxes.map((b) => b.scrollHeight));
+    boxes.forEach((b) => { b.style.height = `${shortest}px`; });
+  });
 }
 
 // The same switch as the AI step, for anywhere a real toggle belongs.

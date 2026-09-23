@@ -307,6 +307,8 @@ button.mini.on { background: var(--acid); border-color: var(--acid); color: #052
 .enginehead { margin-top: 1.6rem; }
 .enginerule { border: 0; border-top: 1px solid var(--line); margin: 1.6rem 0 1.2rem; }
 
+.rulebox { overflow: auto; margin-bottom: 0; }
+
 /* --------------------------------------------------------- pick one of three */
 .choices { display: flex; gap: .45rem; flex-wrap: wrap; }
 .choice {
