@@ -76,9 +76,13 @@ textarea:focus, input:focus, select:focus { outline: 2px solid var(--rust); outl
 .toggle.small { font-weight: 400; color: var(--dim); font-size: .86rem; margin-top: .5rem; }
 .toggle input { width: auto; min-height: 0; margin-top: .25rem; }
 .row { display: flex; align-items: center; gap: .7rem; margin-bottom: .6rem; flex-wrap: wrap; }
-.row label { width: 8.5rem; color: var(--dim); font-size: .9rem; }
-.row input, .row select { flex: 1; min-width: 12rem; }
-.row.buttons { margin-top: 1rem; }
+.row label:not(.toggle) { width: 8.5rem; color: var(--dim); font-size: .9rem; }
+.row input:not([type="checkbox"]), .row select { flex: 1; min-width: 12rem; }
+/* a tick box in a button row is a tick box, not a form field */
+.row .toggle { width: auto; flex: 0 0 auto; align-items: center; margin: 0; white-space: nowrap; }
+.row .toggle input { flex: 0 0 auto; min-width: 0; margin: 0; }
+.row.buttons { margin-top: 1rem; align-items: center; }
+.row.buttons .note { margin: 0; }
 .setup { margin: .3rem 0 .6rem 0; padding-left: 1.1rem; color: var(--dim); font-size: .85rem; }
 .setup li { margin-bottom: .3rem; }
 

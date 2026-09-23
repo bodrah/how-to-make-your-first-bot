@@ -1,7 +1,7 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=0aa940f4";
-import { VENDORS, buildFileRequest } from "./ai.js?v=0aa940f4";
-import { makeZip, textBytes } from "./zip.js?v=0aa940f4";
-import { embedCard, toPngBytes } from "./png.js?v=0aa940f4";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=fe1b9373";
+import { VENDORS, buildFileRequest } from "./ai.js?v=fe1b9373";
+import { makeZip, textBytes } from "./zip.js?v=fe1b9373";
+import { embedCard, toPngBytes } from "./png.js?v=fe1b9373";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
