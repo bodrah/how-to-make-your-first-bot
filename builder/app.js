@@ -1,7 +1,7 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=2bcbcdbf";
-import { VENDORS, buildFileRequest } from "./ai.js?v=2bcbcdbf";
-import { makeZip, textBytes } from "./zip.js?v=2bcbcdbf";
-import { embedCard, toPngBytes } from "./png.js?v=2bcbcdbf";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=0aa940f4";
+import { VENDORS, buildFileRequest } from "./ai.js?v=0aa940f4";
+import { makeZip, textBytes } from "./zip.js?v=0aa940f4";
+import { embedCard, toPngBytes } from "./png.js?v=0aa940f4";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -1208,41 +1208,34 @@ function renderExport() {
 
   const who = state.characters[0];
   const name = chosen("first_name", who) || charName(0);
-  const usedAI = aiCount() > 0;
 
   const box = el("div", "card");
   const boxHead = el("div", "fieldhead");
   boxHead.append(el("h3", null, "Download"));
-  boxHead.append(tip(usedAI
-    ? "You used AI assist, so you get the text file plus a card file: a .png when you added a picture, a .json when you did not."
-    : "A text file with every field laid out in the order a platform asks for them, ready to paste."));
+  boxHead.append(tip("The text file lays every field out in the order a platform asks for them. The json is for anything that imports cards. Add a picture on step 1 and you get a .png card as well."));
   box.append(boxHead);
 
-  const what = usedAI
-    ? (who.image
-        ? `One zip holding ${name}.txt to paste from and ${name}.png — the picture with the card written inside it.`
-        : `One zip holding ${name}.txt to paste from and ${name}.json for anything that imports cards. Add a picture on step 1 to get a .png card instead.`)
-    : `One file: ${name}.txt, with each field laid out and labelled for pasting.`;
+  const what = who.image
+    ? `One zip holding three files: ${name}.txt to paste from, ${name}.json for anything that imports cards, and ${name}.png — your picture with the card written inside it.`
+    : `One zip holding ${name}.txt to paste from and ${name}.json for anything that imports cards. Add a picture on step 1 and the card comes as a .png too.`;
   box.append(el("p", "help", what));
 
-  const grab = el("button", "go", usedAI ? "Download the card (.zip)" : "Download the text file");
+  const grab = el("button", "go", "Download the card (.zip)");
   grab.onclick = async () => {
     grab.disabled = true;
     try {
-      if (!usedAI) {
-        download(`${name}.txt`, buildTxt());
-        status("Saved.");
-      } else {
-        const files = [{ name: `${name}.txt`, bytes: textBytes(buildTxt()) }];
-        if (who.image) {
-          const png = await toPngBytes(who.image);
-          files.push({ name: `${name}.png`, bytes: embedCard(png, buildV3Card()) });
-        } else {
-          files.push({ name: `${name}.json`, bytes: textBytes(JSON.stringify(buildCardJson(), null, 2)) });
-        }
-        downloadBlob(`${name}.zip`, makeZip(files));
-        status(`Saved ${name}.zip — ${files.map((f) => f.name).join(" and ")} inside.`);
+      // Everything the card is, in one download — the text to paste from, the
+      // json for importers, and the picture with the card written inside it.
+      const files = [
+        { name: `${name}.txt`, bytes: textBytes(buildTxt()) },
+        { name: `${name}.json`, bytes: textBytes(JSON.stringify(buildCardJson(), null, 2)) },
+      ];
+      if (who.image) {
+        const png = await toPngBytes(who.image);
+        files.push({ name: `${name}.png`, bytes: embedCard(png, buildV3Card()) });
       }
+      downloadBlob(`${name}.zip`, makeZip(files));
+      status(`Saved ${name}.zip — ${files.map((f) => f.name).join(", ")} inside.`);
     } catch (err) { status(err.message, true); }
     finally { grab.disabled = false; }
   };
