@@ -307,18 +307,17 @@ export const TRACKERS = [
     greeting: "🤼\nName; ♀ or ♂; ⧗ age; 📏 height; ☮ role/relationship to {{user}}; 👚 current clothing/state of dress; ☠ current position, posture, and action" },
 ];
 
-// Tags, grouped. Pulled from Bodrah's own SillyTavern tag list — this is the
-// whole vocabulary the builder supports, nothing invented.
+// The tag vocabulary the sites actually use, pulled from Craveu's own
+// list (api/v1/site-options/tags). Their categories, their spelling.
+// Tags they hide from the creation form are left out.
 export const TAG_GROUPS = [
-  { group: "Tone and genre", tags: ["story driven", "sex driven", "hidden plot", "emotional", "comedy", "romantic comedy", "slice of life", "wholesome", "dark", "dark romance", "gritty", "dead dove", "superhero", "supernatural", "myths and legends", "greek mythology", "another world [isekai]", "roleplaying game (rpg)", "gaming", "tech"] },
-  { group: "Setting", tags: ["modern", "modern setting", "apartment", "small town", "forest", "border", "ohio"] },
-  { group: "Relationship", tags: ["enemies to lovers", "slow burn", "push-pull", "codependent", "toxic", "mutual destruction", "obsessive", "possessive", "fix her", "incest"] },
-  { group: "The character", tags: ["himbo", "cinnamon roll", "brat", "goth", "witch", "prankster", "baker", "pastor", "youtuber", "mafia", "divine", "divine [divinity]", "goddesses", "virgin goddesses", "cursed", "multiple characters", "multi-persona", "solo"] },
-  { group: "Who with who", tags: ["straight", "lesbian", "bisexual", "futanari", "female/female on male (ffm)", "group", "multiple partners", "moresome (4 or more partners)"] },
-  { group: "Explicit", tags: ["kinky", "hardcore", "breeding", "creampie", "vaginal", "oral", "degradation", "CNC", "bound", "angry sex", "public sex", "bargaining sex", "power"] },
-  { group: "Heavy going", tags: ["trauma", "drugs", "secrets", "secret"] },
-  { group: "What the card does", tags: ["trackers", "sends images"] },
+  { group: "Gender", tags: ["Female", "Male", "Non-binary"] },
+  { group: "Hottest", tags: ["Anime", "FemPOV", "Fictional", "Furry", "Game", "MalePOV", "MLM", "Multiple", "Mystery", "Mythological", "Naughty", "Omegaverse", "Romantic", "WLW"] },
+  { group: "Everything else", tags: ["Action", "Adventure", "AnyPOV", "Assistant", "Books", "Boss", "Comedy", "Deredere", "Detective", "Drama", "Emo", "Fantasy", "Giant", "Hero", "Historical", "Horror", "Kuudere", "Mafia", "Magical", "Monster", "Non-English", "Non-Human", "OC", "Politics", "Real", "RPG", "Scenario", "Sci-Fi", "Servant", "Straight", "Switch", "Tomboy", "Tsundere", "Villain", "Vtuber", "Wholesome", "Yandere"] },
 ];
+
+// Craveu caps a card at ten.
+export const TAG_LIMIT = 10;
 
 // Systems are the bigger machines a card can run on. Coming later.
 export const SYSTEMS_SOON = true;

@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=974efeb";
-import { VENDORS, buildFileRequest } from "./ai.js?v=974efeb";
-import { embedCard, toPngBytes } from "./png.js?v=974efeb";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=4444ec1";
+import { VENDORS, buildFileRequest } from "./ai.js?v=4444ec1";
+import { embedCard, toPngBytes } from "./png.js?v=4444ec1";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -867,7 +867,10 @@ function renderTags() {
   const head = el("div", "sectionhead");
   head.append(el("h2", null, "Tags"));
   main.append(head);
-  main.append(el("p", "blurb", "Tick what fits. These are the tags the sites know."));
+  const picked = Object.keys(state.tags).filter((t) => state.tags[t]);
+  main.append(el("p", "blurb", `Tick what fits. These are the tags the sites know — ${TAG_LIMIT} at most on a card.`));
+  const counter = el("p", "note", `${picked.length} of ${TAG_LIMIT} picked.`);
+  main.append(counter);
 
   for (const block of TAG_GROUPS) {
     main.append(el("h3", "castheading", block.group));
@@ -879,8 +882,15 @@ function renderTags() {
       box.type = "checkbox";
       box.checked = on;
       box.onchange = () => {
+        const on = Object.keys(state.tags).filter((t) => state.tags[t]).length;
+        if (box.checked && on >= TAG_LIMIT) {
+          box.checked = false;
+          return status(`That is the limit — a card carries ${TAG_LIMIT} tags. Untick one first.`, true);
+        }
         state.tags[name] = box.checked;
         row.classList.toggle("on", box.checked);
+        const now = Object.keys(state.tags).filter((t) => state.tags[t]).length;
+        counter.textContent = `${now} of ${TAG_LIMIT} picked.`;
         save(); renderRail();
       };
       row.append(box);
