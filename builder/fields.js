@@ -230,7 +230,7 @@ When the Narrator introduces a new NPC, generate and display a character sheet i
 Name {Race, Gender, Age, Height. Brief description of build and body. Brief description of hair and eyes.
 Archetype: Up to 3 archetypes to guide behaviors and presentation.
 Traits: Briefly defined personality traits in comma list format with not less than 5 items.
-[Sexuality OR Orientation field — per build customization]
+Sexuality: Gay, straight, or bi.
 Bodymod: Brief description of body-piercings, tattoos, and other body modifications, if present.
 Scent: Scent-profile to those who are sensitive to smells.
 Speech: Fluency and manner of verbal expression.
