@@ -236,8 +236,10 @@ RULES:
 // prints lives in the card's backend block, never on the page.
 // Mandatory ones ship with every card and cannot be unticked.
 export const TRACKERS = [
-  { id: "time",  icon: "⌚", name: "Time",               mandatory: true },
-  { id: "scene", icon: "🤼", name: "Who is in the scene", mandatory: true },
+  { id: "time",  icon: "⌚", name: "Time", mandatory: true,
+    greeting: "⌚ Time: MM/DD/YYYY HH:MM AM/PM" },
+  { id: "scene", icon: "🤼", name: "Who is in the scene", mandatory: true,
+    greeting: "🤼\nName; ♀ or ♂; ⧗ age; 📏 height; ☮ role/relationship to {{user}}; 👚 current clothing/state of dress; ☠ current position, posture, and action" },
 ];
 
 // Tags, grouped. Pulled from Bodrah's own SillyTavern tag list — this is the

@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=a18c9b3";
-import { VENDORS, buildFileRequest } from "./ai.js?v=a18c9b3";
-import { embedCard, toPngBytes } from "./png.js?v=a18c9b3";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=21999c8";
+import { VENDORS, buildFileRequest } from "./ai.js?v=21999c8";
+import { embedCard, toPngBytes } from "./png.js?v=21999c8";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -100,7 +100,7 @@ const TIPS = {
   side: "W++ sheets for characters who need depth but not a full build — big enough to matter, small enough not to be the lead.",
   embeds: "One-liners for throwaway characters. Defining them stops the model inventing someone inconsistent, and it lets a lorebook hook onto the name.",
   rules: "Optional blocks you paste with the card. Tick only the ones a build actually needs.",
-  greeting: "The opening message, and the rules and trackers that get repeated with it so the first reply already obeys them.",
+  greeting: "The opening message — what the player reads before they type anything. Your trackers get appended to the end of it on export.",
   trackers: "The little status lines the bot prints under every reply. Tick the ones this card should show the player.",
   systems: "A collection of rules and trackers that work together, for things like RPGs. Currently in development.",
   ai: "Optional. Write your bot in plain english, describe what you want in each of the previous sections, then run Enhance the card at the end. The AI takes all of your fields, reads what you wrote, and expands it. You do not use what it gives you as is — it is your starting point.",
@@ -179,6 +179,16 @@ function formatEmbed(raw) {
   return `[${head[0]} — ${head.slice(1).join(";")}${prose ? ". " + prose : "."}]`;
 }
 
+// The greeting as it ships: their own opening, then the trackers they ticked,
+// so the first message already shows the state the card keeps.
+function greetingOut(character) {
+  const own = (chosen("greeting", character) || "").trim();
+  if (!own) return "";
+  const lines = TRACKERS.filter((t) => state.trackers[t.id] && t.greeting)
+    .map((t) => `---\n${t.greeting}`);
+  return lines.length ? `${own}\n\n${lines.join("\n\n")}` : own;
+}
+
 function buildExport() {
   const blocks = [];
   state.characters.forEach((character, index) => {
@@ -222,6 +232,7 @@ function buildExport() {
                  grab("conflict") && `## Sources of conflict\n${grab("conflict")}`].filter(Boolean);
   if (world.length) scenarioBits.push(`# World Profile\n${world.join("\n\n")}`);
   if (grab("gated")) scenarioBits.push(`{ABSOLUTELY CRITICAL INFORMATION BELOW IS ONLY KNOWN BY the characters directly involved and no one else. It is never confessed. Anything the player learns must be earned slowly, through physical evidence, overheard moments, contradictions caught side by side, or somebody else talking:\n${grab("gated")}\n}`);
+  scenarioBits.push(MANDATORY_TRACKER);
   if (scenarioBits.length) blocks.push(scenarioBits.join("\n\n"));
 
   const embeds = state.embeds.filter((e) => e && e.trim()).map(formatEmbed);
@@ -230,7 +241,6 @@ function buildExport() {
   if (rules.length) blocks.push(rules.join("\n\n"));
   const trackers = TRACKERS.filter((tr) => state.trackers[tr.id] && tr.text).map((tr) => tr.text);
   if (trackers.length) blocks.push(trackers.join("\n"));
-  blocks.push(MANDATORY_TRACKER);
   return blocks.join("\n\n");
 }
 
@@ -738,13 +748,10 @@ function renderGreeting() {
     (v) => { current().values.greeting = v; }, opts));
 
   const note = el("div", "card");
-  note.append(el("h3", null, "What rides along with it"));
-  note.append(el("p", "help", "The greeting goes into its own slot on every site, away from the instructions — so the rules and trackers this card runs are repeated underneath it. That way the very first reply already keeps to them."));
-  const list = el("ul", "ridelist");
-  for (const rule of RULES.filter((r) => state.rules[r.id])) list.append(el("li", null, rule.name));
-  for (const tracker of TRACKERS.filter((t) => state.trackers[t.id])) list.append(el("li", null, `${tracker.icon} ${tracker.name}`));
-  list.append(el("li", null, "Scene Continuity Tracker"));
-  note.append(list);
+  note.append(el("h3", null, "Added to the end for you"));
+  note.append(el("p", "help", "Write the opening however you like. On export, the trackers you ticked are appended underneath it, ready for you to fill in with the real values for this first scene."));
+  const shown = TRACKERS.filter((t) => state.trackers[t.id] && t.greeting);
+  if (shown.length) note.append(el("pre", null, shown.map((t) => `---\n${t.greeting}`).join("\n\n")));
   main.append(note);
 }
 
@@ -1429,7 +1436,7 @@ function splitExport() {
     instructions: full,
     scenario: blocks.filter(scenarioStart).join("\n\n"),
     description: blocks.filter((b) => !scenarioStart(b)).join("\n\n"),
-    greeting: (chosen("greeting", first) || "").trim(),
+    greeting: greetingOut(first),
     blurb: "",
   };
 }
