@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER } from "./fields.js?v=323a640";
-import { VENDORS, parseReply, buildRequest } from "./ai.js?v=323a640";
-import { embedCard, toPngBytes } from "./png.js?v=323a640";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER } from "./fields.js?v=1392648";
+import { VENDORS, parseReply, buildRequest } from "./ai.js?v=1392648";
+import { embedCard, toPngBytes } from "./png.js?v=1392648";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -138,9 +138,14 @@ function chosen(id, character = current()) {
   return character.choice[id] === "ai" && character.enhanced[id]
     ? character.enhanced[id] : character.values[id];
 }
+function nameField() {
+  return SECTIONS.flatMap((s) => s.fields).find((f) => f[0] === "first_name");
+}
+
 function fieldLine(spec, value) {
   const [, , , opts = {}] = spec;
   if (!value || !value.trim() || opts.cardOnly) return null;
+  if (!opts.line) return opts.perLine ? fieldLineList(opts, value) : null;
   if (opts.perLine) {
     return value.split("\n").filter((l) => l.trim()).map((l) => `${opts.perLine}${l.trim()}`).join("\n");
   }
@@ -172,7 +177,10 @@ function buildExport() {
     const name = chosen("first_name", character) || charName(index);
     for (const section of SECTIONS) {
       if (!section.exported || section.scenario) continue;
-      const lines = section.fields.map((f) => fieldLine(f, chosen(f[0], character))).filter(Boolean);
+      const own = section.fields.map((f) => fieldLine(f, chosen(f[0], character)));
+      // Name is collected in step 1 but belongs at the top of the profile block.
+      const lines = (section.id === "profile" ? [fieldLine(nameField(), chosen("first_name", character)), ...own] : own)
+        .filter(Boolean);
       if (!lines.length) continue;
       const [open, close] = section.wrap(name);
       blocks.push([open, ...lines, close].join("\n"));

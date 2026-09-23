@@ -6,9 +6,11 @@ export const SECTIONS = [
     id: "bible",
     step: "Step 1",
     title: "Your character's lore",
-    blurb: "This section is only used if you are using AI Assist. Answer in plain English — none of it is exported, it is what the AI reads before it writes your fields.",
+    blurb: "The name, then the lore. Everything below the name is only used if you are using AI Assist — answer in plain English, it is what the AI reads before it writes your fields, and none of it is exported.",
     exported: false,
     fields: [
+      ["first_name", "Name", "What they are called. First name, full name, a handle — whatever people use for them. Used everywhere, with or without AI assist.",
+        { line: "Name", short: true, placeholder: "Belle", always: true }],
       ["seed", "The seed", "What is the core of this character? One line. A premise, a job, a wound, an image."],
       ["wound", "The defining wound", "What is the one thing that shaped who she is now?"],
       ["name_options", "The name", "Pick one from four to six grounded options I offer. Or give me yours."],
@@ -34,8 +36,6 @@ export const SECTIONS = [
     exported: true,
     wrap: (name) => [`[${name || "Name"}'s Character Profile:`, "]"],
     fields: [
-      ["first_name", "Name", "What they are called. First name, full name, a handle — whatever people use for them.",
-        { line: "Name", short: true, placeholder: "Belle" }],
       ["age", "Age", "A number, and it must be 18 or older. Apparent age plus real age if they differ.",
         { line: "Age", short: true, minAge: 18, placeholder: "27" }],
       ["appearance", "Appearance", "Height, build, skin, hair, eyes, face, what they wear, what they carry.", { line: "Appearance" }],
