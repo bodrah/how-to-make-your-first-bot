@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER } from "./fields.js?v=0794b4e";
-import { VENDORS, parseReply, buildRequest } from "./ai.js?v=0794b4e";
-import { embedCard, toPngBytes } from "./png.js?v=0794b4e";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER } from "./fields.js?v=9818244";
+import { VENDORS, parseReply, buildRequest } from "./ai.js?v=9818244";
+import { embedCard, toPngBytes } from "./png.js?v=9818244";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -1041,7 +1041,7 @@ function renderExport() {
       if (usedAI) {
         if (who.image) {
           const png = await toPngBytes(who.image);
-          downloadBytes(`${name}.png`, embedCard(png, buildCardJson()), "image/png");
+          downloadBytes(`${name}.png`, embedCard(png, buildV3Card()), "image/png");
         } else {
           download(`${name}.json`, JSON.stringify(buildCardJson(), null, 2));
         }
@@ -1239,30 +1239,72 @@ function splitExport() {
   };
 }
 
+// The card as the sites want it: one flat object, every field spelled both
+// ways (char_name and name, char_persona and description ...) because the
+// importers disagree about which spelling they read.
 function buildCardJson() {
   const first = state.characters[0];
   const grab = (id) => (chosen(id, first) || "").trim();
   const parts = splitExport();
-  const scenarioText = parts.scenario;
-  const description = parts.description;
+  const name = chosen("first_name", first) || charName(0);
+  const blurb = grab("blurb");
+  const dialogue = grab("example_dialogue");
 
-  const data = {
-    name: chosen("first_name", first) || charName(0),
-    description,
-    personality: "",
-    scenario: scenarioText,
-    first_mes: grab("greeting"),
-    mes_example: "",
-    creator_notes: "Built with Skeletor's Bot Builder.",
-    system_prompt: "",
-    post_history_instructions: "",
-    alternate_greetings: [],
+  return {
+    spec: "",
+    spec_version: "",
+    avatar: "",
     tags: [],
-    creator: "",
-    character_version: "",
-    extensions: {},
+    state: 0,
+    style: 1,
+    nsfw: false,
+    gender: 1,
+    tg_bot_token: "",
+    tg_bot_username: "",
+    discord_bot_token: "",
+    discord_bot_client_id: "",
+
+    char_name: name,
+    char_persona: parts.description,
+    world_scenario: parts.scenario,
+    char_greeting: parts.greeting,
+    example_dialogue: dialogue,
+
+    name,
+    description: parts.description,
+    personality: blurb,
+    char_intro: blurb,
+    creator_notes: blurb,
+    scenario: parts.scenario,
+    first_mes: parts.greeting,
+    mes_example: dialogue,
+    opening_scene: "",
   };
-  return { spec: "chara_card_v3", spec_version: "3.0", data };
+}
+
+// SillyTavern reads the modern nested spec out of the PNG, not the flat one.
+function buildV3Card() {
+  const flat = buildCardJson();
+  return {
+    spec: "chara_card_v3",
+    spec_version: "3.0",
+    data: {
+      name: flat.name,
+      description: flat.description,
+      personality: flat.personality,
+      scenario: flat.scenario,
+      first_mes: flat.first_mes,
+      mes_example: flat.mes_example,
+      creator_notes: flat.creator_notes,
+      system_prompt: "",
+      post_history_instructions: "",
+      alternate_greetings: [],
+      tags: flat.tags,
+      creator: "",
+      character_version: "",
+      extensions: {},
+    },
+  };
 }
 
 function downloadBytes(filename, bytes, type) {
