@@ -1,7 +1,7 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=fa09be68";
-import { VENDORS, buildFileRequest } from "./ai.js?v=fa09be68";
-import { makeZip, textBytes } from "./zip.js?v=fa09be68";
-import { embedCard, toPngBytes } from "./png.js?v=fa09be68";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=ef239601";
+import { VENDORS, buildFileRequest } from "./ai.js?v=ef239601";
+import { makeZip, textBytes } from "./zip.js?v=ef239601";
+import { embedCard, toPngBytes } from "./png.js?v=ef239601";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -1049,7 +1049,7 @@ function renderAI() {
   go.onclick = () => confirmThenEnhance(go, main);
   main.append(go);
   main.append(el("p", "note",
-    `${written} field${written === 1 ? "" : "s"} written so far. Nothing you typed is overwritten — the AI version lands beside yours in Review, and you choose which one exports.`));
+    `${written} field${written === 1 ? "" : "s"} written so far. Nothing you typed is overwritten: where you wrote something, the AI version lands beside yours in Review and you pick which one exports. What you left blank — empty acts, the plot engine, the Narrator — is written straight into the build, since there is nothing to compare it against. Run it again later and anything the AI has already written stays as it is.`));
 }
 
 function row(label, tipText) {
