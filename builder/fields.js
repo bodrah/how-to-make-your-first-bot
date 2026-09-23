@@ -225,18 +225,19 @@ End EVERY response with current scene state:
 🤼
 (List every non-user character present, one per line, using the stat format.)
 Name; ♀ or ♂; ⧗ age; 📏 height; ☮ role/relationship to {{user}}; 👚 current clothing/state of dress; ☠ current position, posture, and action
+
 RULES:
 - Update ONLY based on events in current reply
 - No time skips unless explicitly narrated
 - Track all present NPCs, not just speaking characters
 - Time format must always be MM/DD/YYYY HH:MM AM/PM]`;
 
-// Visible trackers. The card shows these to the player every reply.
-// Bodrah's list — add entries here as he sends them.
+// The tracker list the builder shows. Names only — what each one actually
+// prints lives in the card's backend block, never on the page.
+// Mandatory ones ship with every card and cannot be unticked.
 export const TRACKERS = [
-  { id: "affection", icon: "❤️", name: "Affection / relationship meter",
-    note: "Numeric bar. Milestone events log to EVENT MEMORY.",
-    text: "[❤️ Affection: 0-100, shown as a bar. Milestone changes are logged to EVENT MEMORY.]" },
+  { id: "time",  icon: "⌚", name: "Time",               mandatory: true },
+  { id: "scene", icon: "🤼", name: "Who is in the scene", mandatory: true },
 ];
 
 // Systems are the bigger machines a card can run on. Coming later.

@@ -304,17 +304,19 @@ button.mini.on { background: var(--acid); border-color: var(--acid); color: #052
 .enginerule { border: 0; border-top: 1px solid var(--line); margin: 1.6rem 0 1.2rem; }
 
 /* ------------------------------------------------------------- trackers */
-.trackers { display: grid; gap: .5rem; }
+.trackers { display: grid; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); gap: .5rem; }
 .trackrow {
-  display: flex; gap: .7rem; align-items: flex-start; cursor: pointer;
+  display: flex; gap: .7rem; align-items: center; cursor: pointer;
   border: 1px solid var(--line); border-radius: 10px; background: var(--panel);
   padding: .8rem .9rem;
 }
 .trackrow:hover { border-color: var(--violet); }
 .trackrow.on { border-color: var(--acid); background: rgba(110,231,160,.06); }
-.trackrow input { width: auto; min-height: 0; margin-top: .2rem; accent-color: var(--acid); }
+.trackrow input { width: auto; min-height: 0; accent-color: var(--acid); }
+.trackrow.locked { cursor: default; }
+.trackrow.locked input { opacity: .55; }
 .trackbody { flex: 1; }
-.tracktitle { display: flex; align-items: center; gap: .5rem; font-weight: 600; }
+.tracktitle { display: flex; align-items: center; gap: .5rem; font-weight: 600; flex: 1; }
 .trackicon { font-size: 1.05rem; }
 .tracknote { margin: .25rem 0 0; color: var(--dim); font-size: .88rem; }
 .card.soon { border-style: dashed; text-align: center; padding: 2rem 1.2rem; }

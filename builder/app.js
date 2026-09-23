@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER } from "./fields.js?v=454fb75";
-import { VENDORS, parseReply, buildRequest } from "./ai.js?v=454fb75";
-import { embedCard, toPngBytes } from "./png.js?v=454fb75";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER } from "./fields.js?v=0794b4e";
+import { VENDORS, parseReply, buildRequest } from "./ai.js?v=0794b4e";
+import { embedCard, toPngBytes } from "./png.js?v=0794b4e";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -23,6 +23,7 @@ if (!state.characters) {
 state.characters.forEach((c) => { c.values ||= {}; c.enhanced ||= {}; c.choice ||= {}; });
 state.acts ||= [];
 state.trackers ||= {};
+TRACKERS.filter((t) => t.mandatory).forEach((t) => { state.trackers[t.id] = true; });
 // Four acts is the shape of the method; older saves get topped up to four.
 while (state.acts.length < 4) state.acts.push({ title: "", text: "" });
 let who = 0;                       // which character is on screen
@@ -219,7 +220,7 @@ function buildExport() {
   if (embeds.length) blocks.push(embeds.join("\n"));
   const rules = RULES.filter((r) => state.rules[r.id]).map((r) => r.text);
   if (rules.length) blocks.push(rules.join("\n\n"));
-  const trackers = TRACKERS.filter((tr) => state.trackers[tr.id]).map((tr) => tr.text);
+  const trackers = TRACKERS.filter((tr) => state.trackers[tr.id] && tr.text).map((tr) => tr.text);
   if (trackers.length) blocks.push(trackers.join("\n"));
   blocks.push(MANDATORY_TRACKER);
   return blocks.join("\n\n");
@@ -722,39 +723,28 @@ function renderAiSwitch() {
 function renderTrackers() {
   const main = $("#main");
   sectionHeading(main, "Trackers",
-    "The status lines the bot prints under every reply, so the player can see where they stand. Tick the ones this card should show.",
+    "The status lines the bot keeps as it plays. Tick the ones this card should run.",
     TIPS.trackers);
 
-  const fixed = el("div", "card");
-  const fixedHead = el("div", "fieldhead");
-  fixedHead.append(el("h3", null, "Scene Continuity Tracker"));
-  fixedHead.append(el("span", "badge", "mandatory"));
-  fixedHead.append(tip("Every card carries this one. It makes the bot end each reply with the time, who is present, what they are wearing and what they are doing — which is what stops a long chat drifting."));
-  fixed.append(fixedHead);
-  fixed.append(el("p", "help", "Goes into every card exactly as written."));
-  fixed.append(el("pre", null, MANDATORY_TRACKER));
-  main.append(fixed);
-
-  main.append(el("h3", "castheading", "Optional trackers"));
   const list = el("div", "trackers");
   for (const tracker of TRACKERS) {
-    const row = el("label", "trackrow" + (state.trackers[tracker.id] ? " on" : ""));
+    const on = !!state.trackers[tracker.id];
+    const row = el("label", "trackrow" + (on ? " on" : "") + (tracker.mandatory ? " locked" : ""));
     const box = el("input");
     box.type = "checkbox";
-    box.checked = !!state.trackers[tracker.id];
+    box.checked = on;
+    box.disabled = !!tracker.mandatory;
     box.onchange = () => { state.trackers[tracker.id] = box.checked; save(); render(); };
     row.append(box);
-    const body = el("div", "trackbody");
     const title = el("div", "tracktitle");
     title.append(el("span", "trackicon", tracker.icon));
     title.append(el("span", null, tracker.name));
-    body.append(title);
-    body.append(el("p", "tracknote", tracker.note));
-    row.append(body);
+    if (tracker.mandatory) title.append(el("span", "badge", "mandatory"));
+    row.append(title);
     list.append(row);
   }
   main.append(list);
-  main.append(el("p", "note", "Hidden trackers — the ones the bot keeps to itself — are coming later."));
+  main.append(el("p", "note", "The mandatory ones are built into every card and cannot be turned off. More trackers, and the hidden ones the bot keeps to itself, are coming later."));
 }
 
 function renderSystems() {
