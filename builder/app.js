@@ -1,7 +1,7 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=2fa056c9";
-import { VENDORS, buildFileRequest } from "./ai.js?v=2fa056c9";
-import { makeZip, textBytes } from "./zip.js?v=2fa056c9";
-import { embedCard, toPngBytes } from "./png.js?v=2fa056c9";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=cc0b10a5";
+import { VENDORS, buildFileRequest } from "./ai.js?v=cc0b10a5";
+import { makeZip, textBytes } from "./zip.js?v=cc0b10a5";
+import { embedCard, toPngBytes } from "./png.js?v=cc0b10a5";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -29,6 +29,12 @@ state.rules ||= { rule21: true };
 state.rules.rule21 = true;            // the always-21 rule cannot be turned off
 state.trackers ||= {};
 state.tags ||= {};
+// Tags picked from an older list are not tags any more — drop them rather
+// than quietly exporting a word the sites do not know.
+{
+  const known = new Set(TAG_GROUPS.flatMap((g) => g.tags));
+  for (const name of Object.keys(state.tags)) if (!known.has(name)) delete state.tags[name];
+}
 state.aiBlocks ||= {};
 state.ai ||= { on: false, vendor: "anthropic", model: "", remember: false, instruction: "",
                baseUrl: "http://localhost:11434/v1" };
