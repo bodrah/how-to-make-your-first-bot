@@ -3,13 +3,29 @@
 
 GitHub Pages sends cache-control: max-age=600, and a hard refresh does not
 reliably re-fetch ES modules. A changing query string does.
+
+The stamp is a hash of the files themselves, not the last commit — the commit
+sha is always one behind when this runs before `git commit`, which served a
+cached copy of a file that had in fact changed.
 """
-import re, subprocess, pathlib
+import re, hashlib, pathlib
 
 root = pathlib.Path(__file__).parent
-version = subprocess.run(["git", "log", "-1", "--format=%h"], capture_output=True, text=True,
-                         cwd=root).stdout.strip() or "dev"
-stamp = f"?v={version}"
+FILES = ("app.js", "ai.js", "fields.js", "png.js", "master-prompt.js", "style.css")
+
+
+def version():
+    digest = hashlib.sha1()
+    for name in sorted(FILES):
+        path = root / name
+        if not path.exists():
+            continue
+        # ignore the stamps themselves, or the hash chases its own tail
+        digest.update(re.sub(r"\?v=[a-z0-9]+", "", path.read_text()).encode())
+    return digest.hexdigest()[:8]
+
+
+stamp = f"?v={version()}"
 
 html = (root / "index.html").read_text()
 html = re.sub(r'(src="app\.js)(\?v=[^"]*)?"', rf'\1{stamp}"', html)
@@ -22,4 +38,4 @@ for name in ("app.js", "ai.js"):
     text = re.sub(r'(from "\./[a-z-]+\.js)(\?v=[^"]*)?"', rf'\1{stamp}"', text)
     path.write_text(text)
 
-print("stamped", version)
+print("stamped", stamp)
