@@ -26,7 +26,7 @@ export const SECTIONS = [
       ["warm_one", "The warm one", "Who was the one good early relationship? Where did {their} skill or {their} identity come from? What was the loss that marked the end of that time?"],
       ["hers", "The one thing that was {theirs}", "What was {their} private refuge, skill, or passion? Did {they} hide it? Why?"],
       ["academics", "Academics", "Did {they} struggle, coast, or excel? How {were} {they} treated? Was there one instructor who saw something in {them}? Name that person."],
-      ["pull", "The pull of {their} world", "Did the world {they} grew up in try to take {them} too? Who kept {them} out?"],
+      ["pull", "Getting pulled in", "The place {they} grew up in ran on something — a family trade, a gang, a church, drink, money owed. Did it try to make {them} part of it? Who kept {them} out of it, or did nobody?"],
       ["turn", "The turn", "What is the adult wound, 18 or older? What was asked of {them}, what did it cost, what did it break? Stated, not shown."],
       ["fall", "The fall", "How did the turn cascade into where {they} {are} now?"],
       ["now", "Now", "What is {their} current state? What is the one good thing in {their} life right now? How {do} {they} relate to the thing {they} lost?"],
