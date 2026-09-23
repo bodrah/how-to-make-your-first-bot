@@ -1,7 +1,7 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=cc0b10a5";
-import { VENDORS, buildFileRequest } from "./ai.js?v=cc0b10a5";
-import { makeZip, textBytes } from "./zip.js?v=cc0b10a5";
-import { embedCard, toPngBytes } from "./png.js?v=cc0b10a5";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=2bcbcdbf";
+import { VENDORS, buildFileRequest } from "./ai.js?v=2bcbcdbf";
+import { makeZip, textBytes } from "./zip.js?v=2bcbcdbf";
+import { embedCard, toPngBytes } from "./png.js?v=2bcbcdbf";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -33,7 +33,9 @@ state.tags ||= {};
 // than quietly exporting a word the sites do not know.
 {
   const known = new Set(TAG_GROUPS.flatMap((g) => g.tags));
-  for (const name of Object.keys(state.tags)) if (!known.has(name)) delete state.tags[name];
+  let dropped = false;
+  for (const name of Object.keys(state.tags)) if (!known.has(name)) { delete state.tags[name]; dropped = true; }
+  if (dropped) localStorage.setItem(STORE, JSON.stringify(state));
 }
 state.aiBlocks ||= {};
 state.ai ||= { on: false, vendor: "anthropic", model: "", remember: false, instruction: "",
@@ -338,6 +340,7 @@ function stepState(id) {
                               : Object.values(state.trackers).filter(Boolean).length;
     return { state: "done", count: String(on) };     // both always carry a mandatory block
   }
+  if (id === "systems") return { state: "done", count: "" };   // nothing in it yet
   if (id === "tags") {
     const on = Object.values(state.tags).filter(Boolean).length;
     return { state: on ? "done" : "empty", count: String(on) };
