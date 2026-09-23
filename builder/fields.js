@@ -113,7 +113,7 @@ export const SECTIONS = [
        "What keeps going wrong. Money, people who turn up, things that do not add up.",
        { placeholder: "Money. Envelopes addressed to somebody else. The nights she is gone. A friend who knows more than she says." }],
       ["greeting", "Opening message",
-       "The first thing the player sees. Set the scene, put the character in it, and stop somewhere they can answer. This is not exported into the card text — it goes in the greeting slot of the SillyTavern card.",
+       "The first thing the player sees. Set the scene, put the character in it, and stop somewhere they can answer. This is not exported into the card text — it goes in the card's greeting slot.",
        { cardOnly: true, placeholder: "*The door to 3B opens before you knock, though nobody is standing behind it. From somewhere down the hall, over running water:* \"It's open, come on in! I'll be right there, I swear.\"" }],
       ["gated", "What the player must NOT be told",
        "The buried truth. The model knows it and never confesses it — the player earns it through evidence, contradictions, or somebody else talking.",
