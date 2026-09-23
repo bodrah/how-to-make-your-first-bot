@@ -20,7 +20,14 @@ export const VENDORS = {
       if (!r.ok) throw new Error(await errorText(r));
       return (await r.json()).data.map((m) => m.id);
     },
-    async complete(key, model, system, user) {
+    async complete(key, model, system, user, opts = {}) {
+      const parts = [];
+      if (opts.image) {
+        const [meta, b64] = opts.image.split(",");
+        parts.push({ type: "image", source: { type: "base64",
+          media_type: (meta.match(/data:([^;]+)/) || [, "image/jpeg"])[1], data: b64 } });
+      }
+      parts.push({ type: "text", text: user });
       const r = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
@@ -33,7 +40,7 @@ export const VENDORS = {
           model,
           max_tokens: 8000,
           system,
-          messages: [{ role: "user", content: user }],
+          messages: [{ role: "user", content: parts }],
         }),
       });
       if (!r.ok) throw new Error(await errorText(r));
@@ -55,13 +62,16 @@ export const VENDORS = {
       if (!r.ok) throw new Error(await errorText(r));
       return (await r.json()).data.map((m) => m.id).filter((id) => /^(gpt|o[0-9])/.test(id)).sort();
     },
-    async complete(key, model, system, user) {
+    async complete(key, model, system, user, opts = {}) {
+      const content = opts.image
+        ? [{ type: "text", text: user }, { type: "image_url", image_url: { url: opts.image } }]
+        : user;
       const r = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
         body: JSON.stringify({
           model,
-          messages: [{ role: "system", content: system }, { role: "user", content: user }],
+          messages: [{ role: "system", content: system }, { role: "user", content }],
         }),
       });
       if (!r.ok) throw new Error(await errorText(r));
@@ -83,20 +93,25 @@ export const VENDORS = {
         .filter((m) => (m.supportedGenerationMethods || []).includes("generateContent"))
         .map((m) => m.name.replace(/^models\//, ""));
     },
-    async complete(key, model, system, user) {
+    async complete(key, model, system, user, opts = {}) {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+      const parts = [{ text: user }];
+      if (opts.image) {
+        const [meta, b64] = opts.image.split(",");
+        parts.push({ inline_data: { mime_type: (meta.match(/data:([^;]+)/) || [, "image/jpeg"])[1], data: b64 } });
+      }
       const r = await fetch(url, {
         method: "POST",
         headers: { "content-type": "application/json", "x-goog-api-key": key },
         body: JSON.stringify({
           system_instruction: { parts: [{ text: system }] },
-          contents: [{ role: "user", parts: [{ text: user }] }],
+          contents: [{ role: "user", parts }],
         }),
       });
       if (!r.ok) throw new Error(await errorText(r));
       const data = await r.json();
-      const parts = data.candidates?.[0]?.content?.parts || [];
-      return parts.map((p) => p.text || "").join("");
+      const reply = data.candidates?.[0]?.content?.parts || [];
+      return reply.map((p) => p.text || "").join("");
     },
   },
 
@@ -126,7 +141,10 @@ export const VENDORS = {
         headers: { "content-type": "application/json", ...authHeader(key) },
         body: JSON.stringify({
           model,
-          messages: [{ role: "system", content: system }, { role: "user", content: user }],
+          messages: [{ role: "system", content: system },
+                     { role: "user", content: opts.image
+                       ? [{ type: "text", text: user }, { type: "image_url", image_url: { url: opts.image } }]
+                       : user }],
           stream: false,
           // Thinking models otherwise spend the whole budget reasoning and
           // return empty content. Servers that don't know the field ignore it.
@@ -149,13 +167,16 @@ export const VENDORS = {
       if (!r.ok) throw new Error(await errorText(r));
       return (await r.json()).data.map((m) => m.id).sort();
     },
-    async complete(key, model, system, user) {
+    async complete(key, model, system, user, opts = {}) {
+      const content = opts.image
+        ? [{ type: "text", text: user }, { type: "image_url", image_url: { url: opts.image } }]
+        : user;
       const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
         body: JSON.stringify({
           model,
-          messages: [{ role: "system", content: system }, { role: "user", content: user }],
+          messages: [{ role: "system", content: system }, { role: "user", content }],
         }),
       });
       if (!r.ok) throw new Error(await errorText(r));

@@ -287,3 +287,14 @@ button.mini.on { background: var(--acid); border-color: var(--acid); color: #052
   border-left: 3px solid var(--warn); background: rgba(255,93,122,.08);
   color: #ffd9e0; border-radius: 0 8px 8px 0;
 }
+.portrait .portraitrow { display: flex; gap: .9rem; align-items: center; margin-top: .6rem; flex-wrap: wrap; }
+.shot {
+  width: 96px; height: 128px; border-radius: 8px; overflow: hidden;
+  border: 1px solid var(--line); background: #0c0812; display: grid; place-items: center; flex: 0 0 auto;
+}
+.shot img { width: 100%; height: 100%; object-fit: cover; }
+.shotempty { color: var(--dim); font-size: .78rem; }
+.portraitbuttons { display: flex; gap: .5rem; flex-wrap: wrap; }
+.act { border-top: 1px solid var(--line); padding-top: .7rem; margin-top: .7rem; }
+.act .fieldhead { gap: .5rem; }
+.acttitle { flex: 1; min-height: 0; padding: .35rem .6rem; font-size: .92rem; }

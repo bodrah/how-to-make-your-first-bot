@@ -83,12 +83,6 @@ export const SECTIONS = [
     exported: true,
     scenario: true,
     fields: [
-      ["how_to_run", "How to run this story",
-       "Direction for the model itself, not for the reader. Drive the plot, do not wait for the player, keep the world moving when they do nothing.",
-       { placeholder: "Relentlessly drive plot, tension and conflict in every reply. Never wait for the player to act — when they do nothing, she and the world move on their own." }],
-      ["acts", "The acts",
-       "Where this goes, in order. One short block per act. Name what changes, not every beat.",
-       { placeholder: "Act 1 — The spare room. She is warm from the first minute and the place feels shared inside a week.\nAct 2 — Small cracks. Mail under a name she does not use, rent late then paid in cash.\nAct 3 — Underneath. What she actually does stays hidden unless the player digs." }],
       ["world_setting", "The world",
        "Where this happens. The rooms, the street, the hours the story runs across.",
        { placeholder: "An old brick walk-up in a mid-size city, third floor. Downstairs: a corner store, a laundromat with two working machines, and a neighbour whose door opens whenever anyone takes the stairs." }],
@@ -98,6 +92,9 @@ export const SECTIONS = [
       ["conflict", "Sources of conflict",
        "What keeps going wrong. Money, people who turn up, things that do not add up.",
        { placeholder: "Money. Envelopes addressed to somebody else. The nights she is gone. A friend who knows more than she says." }],
+      ["greeting", "Opening message",
+       "The first thing the player sees. Set the scene, put the character in it, and stop somewhere they can answer. This is not exported into the card text — it goes in the greeting slot of the SillyTavern card.",
+       { cardOnly: true, placeholder: "*The door to 3B opens before you knock, though nobody is standing behind it. From somewhere down the hall, over running water:* \"It's open, come on in! I'll be right there, I swear.\"" }],
       ["gated", "What the player must NOT be told",
        "The buried truth. The model knows it and never confesses it — the player earns it through evidence, contradictions, or somebody else talking.",
        { placeholder: "Her legal name is not the one she uses. The cash comes from work she calls temporary and has called temporary for years. She could stop and never has." }],
@@ -127,6 +124,13 @@ export const WPP_FIELDS = [
 ];
 
 export const WPP_CLOSER = "Closing paragraph. What she wants from {{user}}, how she goes after it, how she handles a no, what she is careless about.";
+
+// Fixed, like a rule: direction for the model, the same in every build.
+export const HOW_TO_RUN = `[How to run this story:
+- Relentlessly drive plot, tension, conflict, and character agency in every single response. Do not be passive or overly gentle
+- Maintain strong narrative momentum and immersive sensory detail while keeping responses fresh and non-repetitive
+- Actively drive the plot forward in every response as per the story arc rules. Escalate tension, introduce complications, create consequences, and maintain strong narrative momentum
+- Never wait for {{user}} to act. When {{user}} does nothing, the characters and the world move on their own]`;
 
 export const RULES = [
   {

@@ -1,5 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS } from "./fields.js";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN } from "./fields.js";
 import { VENDORS, parseReply, buildRequest } from "./ai.js";
+import { embedCard, toPngBytes } from "./png.js";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -7,6 +8,8 @@ const KEYSTORE = "skeletor-bot-builder-key";
 const state = load() || {
   characters: [blankCharacter()],
   sideChars: [],
+  acts: [],
+  howToRun: true,
   embeds: [],
   rules: { rule21: true, perspective: false, isolation: false, texting: false },
   ai: { on: false, vendor: "anthropic", model: "", remember: false, instruction: "",
@@ -18,6 +21,8 @@ if (!state.characters) {
   delete state.values; delete state.enhanced; delete state.choice;
 }
 state.characters.forEach((c) => { c.values ||= {}; c.enhanced ||= {}; c.choice ||= {}; });
+state.acts ||= [];
+if (state.howToRun === undefined) state.howToRun = true;
 let who = 0;                       // which character is on screen
 
 function blankCharacter(name = "") {
@@ -131,7 +136,7 @@ function chosen(id, character = current()) {
 }
 function fieldLine(spec, value) {
   const [, , , opts = {}] = spec;
-  if (!value || !value.trim()) return null;
+  if (!value || !value.trim() || opts.cardOnly) return null;
   if (opts.perLine) {
     return value.split("\n").filter((l) => l.trim()).map((l) => `${opts.perLine}${l.trim()}`).join("\n");
   }
@@ -185,8 +190,10 @@ function buildExport() {
   const first = state.characters[0];
   const scenarioBits = [];
   const grab = (id) => (chosen(id, first) || "").trim();
-  if (grab("how_to_run")) scenarioBits.push(`[How to run this story:\n${grab("how_to_run")}]`);
-  if (grab("acts")) scenarioBits.push(grab("acts").split(/\n{2,}|\n(?=Act )/i).map((a) => `#${a.trim()}`).join("\n\n"));
+  if (state.howToRun) scenarioBits.push(HOW_TO_RUN);
+  const acts = state.acts.filter((a) => (a.title || "").trim() || (a.text || "").trim());
+  if (acts.length) scenarioBits.push(acts.map((a, i) =>
+    `#Act ${i + 1}${a.title ? " – " + a.title.trim() : ""}\n${(a.text || "").trim()}`).join("\n\n"));
   const world = [grab("world_setting") && `## Setting\n${grab("world_setting")}`,
                  grab("problem") && `## The problem\n${grab("problem")}`,
                  grab("conflict") && `## Sources of conflict\n${grab("conflict")}`].filter(Boolean);
@@ -232,6 +239,11 @@ function stepCount(id) {
     const done = state.characters.reduce(
       (n, c) => n + section.fields.filter((f) => (c.values[f[0]] || "").trim()).length, 0);
     return `${done}/${section.fields.length * state.characters.length}`;
+  }
+  if (id === "scenario") {
+    const written = SECTIONS.find((s) => s.scenario).fields
+      .filter((f) => (current().values[f[0]] || "").trim()).length + state.acts.length;
+    return String(written);
   }
   if (id === "side") return String(state.sideChars.length);
   if (id === "embeds") return String(state.embeds.filter(Boolean).length);
@@ -363,6 +375,115 @@ function refreshChips() {
   chips.forEach((chip, index) => { chip.textContent = charName(index); });
 }
 
+// One picture per character: the AI can look at it, and it becomes the face of
+// the SillyTavern card on export.
+// One box per act, in order, however many the story needs.
+function actsBox() {
+  const wrap = el("div", "card");
+  const head = el("div", "fieldhead");
+  head.append(el("h3", null, "The acts"));
+  head.append(tip("Where the story goes, in order. One box per act — name what changes, not every beat. Add as many as it takes."));
+  wrap.append(head);
+  wrap.append(el("p", "help", "Each act gets its own box. They export as #Act 1, #Act 2, and so on, in this order."));
+
+  state.acts.forEach((act, index) => {
+    const row = el("div", "act");
+    const rowhead = el("div", "fieldhead");
+    rowhead.append(el("strong", null, `Act ${index + 1}`));
+    const title = el("input", "acttitle");
+    title.placeholder = index === 0 ? "The spare room" : "What this act is called";
+    title.value = act.title || "";
+    title.oninput = () => { act.title = title.value; save(); };
+    rowhead.append(title);
+    const del = el("button", "mini danger", "Remove");
+    del.onclick = () => { state.acts.splice(index, 1); save(); render(); };
+    rowhead.append(del);
+    row.append(rowhead);
+    const body = el("textarea");
+    body.placeholder = index === 0
+      ? "She is warm from the first minute, generous with space and compliments, and the place feels shared inside a week."
+      : "What changes in this act.";
+    body.value = act.text || "";
+    body.oninput = () => { act.text = body.value; save(); renderRail(); };
+    row.append(body);
+    wrap.append(row);
+  });
+
+  const add = el("button", "go", state.acts.length ? "Add another act" : "Add the first act");
+  add.onclick = () => { state.acts.push({ title: "", text: "" }); save(); render(); };
+  wrap.append(add);
+  return wrap;
+}
+
+function portraitBox() {
+  const card = el("div", "card portrait");
+  const head = el("div", "fieldhead");
+  head.append(el("label", null, "Picture (optional)"));
+  head.append(tip("Two uses. With AI assist on, the model looks at it while writing appearance. On export it becomes the SillyTavern card image, with the character data written inside the file."));
+  card.append(head);
+  card.append(el("p", "help", "A portrait of this character. Stays on your device — it is sent to the AI only when you run Enhance, and only to the vendor you picked."));
+
+  const row = el("div", "portraitrow");
+  const preview = el("div", "shot");
+  if (current().image) {
+    const img = el("img");
+    img.src = current().image;
+    preview.append(img);
+  } else {
+    preview.append(el("span", "shotempty", "no picture"));
+  }
+  row.append(preview);
+
+  const buttons = el("div", "portraitbuttons");
+  const pick = el("button", "ghost", current().image ? "Replace picture" : "Add a picture");
+  const file = el("input");
+  file.type = "file";
+  file.accept = "image/*";
+  file.hidden = true;
+  file.onchange = async () => {
+    const chosenFile = file.files[0];
+    if (!chosenFile) return;
+    try {
+      current().image = await shrink(chosenFile);
+      save();
+      render();
+    } catch (err) { status(err.message, true); }
+  };
+  pick.onclick = () => file.click();
+  buttons.append(pick, file);
+  if (current().image) {
+    const drop = el("button", "ghost danger", "Remove");
+    drop.onclick = () => { delete current().image; save(); render(); };
+    buttons.append(drop);
+  }
+  row.append(buttons);
+  card.append(row);
+  return card;
+}
+
+// Browsers keep about 5MB of storage per site, so the picture is scaled down
+// before it is saved. Plenty for a portrait and for the model to read.
+function shrink(file, maxSide = 1024) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.88));
+      };
+      img.onerror = () => reject(new Error("That file could not be read as an image."));
+      img.src = reader.result;
+    };
+    reader.onerror = () => reject(new Error("That file could not be read."));
+    reader.readAsDataURL(file);
+  });
+}
+
 function castBar(main) {
   const bar = el("div", "castbar");
   const label = el("div", "rowlabel");
@@ -401,6 +522,27 @@ function renderSection(section) {
   const main = $("#main");
   sectionHeading(main, `${section.step} · ${section.title}`, section.blurb, TIPS[section.id]);
   if (!section.scenario) castBar(main);
+
+  if (section.id === "profile") main.append(portraitBox());
+
+  if (section.scenario) {
+    const fixed = el("div", "card");
+    const head = el("label", "toggle");
+    const box = el("input");
+    box.type = "checkbox";
+    box.checked = state.howToRun;
+    box.onchange = () => { state.howToRun = box.checked; save(); renderRail(); };
+    head.append(box, el("span", null, "How to run this story"));
+    fixed.append(head);
+    const why = el("div", "fieldhead");
+    why.append(el("p", "help", "Fixed direction for the model, the same in every build — it goes into the card as written."));
+    why.append(tip("Like a rule: you are not writing this one, you are choosing whether to include it. It tells the model to drive the story instead of waiting for the player."));
+    fixed.append(why);
+    fixed.append(el("pre", null, HOW_TO_RUN));
+    main.append(fixed);
+
+    main.append(actsBox());
+  }
 
   if (section.id === "psych") {
     const auto = el("label", "toggle bigtoggle");
@@ -763,6 +905,38 @@ function renderExport() {
   const text = buildExport();
   main.append(el("pre", "output", text || "Nothing written yet."));
 
+  // SillyTavern card: the picture with the character written inside it
+  const cardBox = el("div", "card");
+  const cardHead = el("div", "fieldhead");
+  cardHead.append(el("h3", null, "SillyTavern card"));
+  cardHead.append(tip("A PNG with the character data written into the file itself. Drop it into SillyTavern, Chub, or anything that reads character cards — the picture is the card."));
+  cardBox.append(cardHead);
+  const who = state.characters[0];
+  if (!who.image) {
+    cardBox.append(el("p", "help", "Add a picture on the Personality step and this turns into a downloadable card."));
+  } else {
+    cardBox.append(el("p", "help", `Uses ${charName(0)}'s picture, with the card text, scenario and opening message written inside the file.`));
+    const make = el("button", "go", "Download SillyTavern card (.png)");
+    make.onclick = async () => {
+      make.disabled = true; make.textContent = "Building…";
+      try {
+        const png = await toPngBytes(who.image);
+        const withCard = embedCard(png, buildCardJson());
+        const url = URL.createObjectURL(new Blob([withCard], { type: "image/png" }));
+        const link = el("a");
+        link.href = url;
+        link.download = `${chosen("first_name", who) || "character"}.png`;
+        link.click();
+        URL.revokeObjectURL(url);
+        status("Card saved. Import it straight into SillyTavern.");
+      } catch (err) {
+        status(err.message, true);
+      } finally { make.disabled = false; make.textContent = "Download SillyTavern card (.png)"; }
+    };
+    cardBox.append(make);
+  }
+  main.append(cardBox);
+
   const buttons = el("div", "row buttons");
   const copy = el("button", "go", "Copy");
   copy.onclick = async () => {
@@ -844,6 +1018,7 @@ async function enhanceAll(button) {
       if (!Object.keys(bible).length && !Object.keys(filled).length) continue;
 
       // Everyone else in the build, so the model writes them as one cast.
+      const seeing = character.image ? "A picture of this character is attached — write the appearance from what you can see in it." : "";
       const castNote = state.characters.length > 1
         ? `This build has ${state.characters.length} characters: ${state.characters.map((c, i) => charName(i)).join(", ")}. You are writing ${charName(index)} only.`
         : "";
@@ -854,9 +1029,10 @@ async function enhanceAll(button) {
 
       const { system, user } = buildRequest({
         askedFor: fieldIds, fieldSpecs: specs, bible, current: filled,
-        instruction: [castNote, state.ai.instruction].filter(Boolean).join("\n\n"),
+        instruction: [seeing, castNote, state.ai.instruction].filter(Boolean).join("\n\n"),
       });
-      const reply = await vendor.complete(apiKey, model, system, user, { baseUrl: state.ai.baseUrl });
+      const reply = await vendor.complete(apiKey, model, system, user,
+        { baseUrl: state.ai.baseUrl, image: character.image });
       const { fields } = parseReply(reply);
       for (const [id, value] of Object.entries(fields)) {
         if (!fieldIds.includes(id) || !value || !String(value).trim()) continue;
@@ -877,6 +1053,35 @@ async function enhanceAll(button) {
     button.disabled = false;
     button.textContent = label;
   }
+}
+
+// The shape SillyTavern and Chub read. Description carries the profile blocks;
+// scenario and the opening message get their own slots, as the format expects.
+function buildCardJson() {
+  const first = state.characters[0];
+  const grab = (id) => (chosen(id, first) || "").trim();
+  const scenarioText = buildExport().split("\n\n").filter((b) =>
+    b.startsWith("[How to run this story") || b.startsWith("#") || b.startsWith("{ABSOLUTELY")).join("\n\n");
+  const description = buildExport().split("\n\n").filter((b) =>
+    !(b.startsWith("[How to run this story") || b.startsWith("#") || b.startsWith("{ABSOLUTELY"))).join("\n\n");
+
+  const data = {
+    name: chosen("first_name", first) || charName(0),
+    description,
+    personality: "",
+    scenario: scenarioText,
+    first_mes: grab("greeting"),
+    mes_example: "",
+    creator_notes: "Built with Skeletor's Bot Builder.",
+    system_prompt: "",
+    post_history_instructions: "",
+    alternate_greetings: [],
+    tags: [],
+    creator: "",
+    character_version: "",
+    extensions: {},
+  };
+  return { spec: "chara_card_v3", spec_version: "3.0", data };
 }
 
 function download(filename, text) {
