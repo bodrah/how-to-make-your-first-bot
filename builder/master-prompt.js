@@ -17,6 +17,9 @@ HOW EACH FIELD IS WRITTEN
 - Concrete over abstract: name the object, the habit, the thing said out loud.
 - Never invent a plot beat that contradicts what the author wrote. Where the author gave you nothing, write something plain that fits, and keep it small.
 - The Voice field ends with one short line of the character's actual speech, in quotes.
+- The opening message is prose, not a script. Spoken words go in "quotation marks"; everything else — action, setting, what the room is doing — is wrapped in *asterisks*. Every line of narration has them. If the author wrote the opening without them, put them in.
+- Anything in square brackets is a blank left for you: [the place this story happens], [write this act], [PURPOSE]. Replace each one with writing that fits this build, and never hand a bracket back unfilled.
+- Acts left blank are yours to write: four acts, each a title and a short paragraph, escalating in order, ending where the story has somewhere left to go.
 - Lists (Likes and Hobbies, Dislikes, Kinks, Facts) are plain comma-separated or line-separated items a person would name out loud. No commentary.
 - Second person "you" refers to the player. Leave the literal token {{user}} exactly as it appears — never replace it with a name.
 

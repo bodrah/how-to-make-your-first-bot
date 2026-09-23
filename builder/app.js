@@ -1,6 +1,7 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=109959c7";
-import { VENDORS, buildFileRequest } from "./ai.js?v=109959c7";
-import { embedCard, toPngBytes } from "./png.js?v=109959c7";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=2fa056c9";
+import { VENDORS, buildFileRequest } from "./ai.js?v=2fa056c9";
+import { makeZip, textBytes } from "./zip.js?v=2fa056c9";
+import { embedCard, toPngBytes } from "./png.js?v=2fa056c9";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -237,11 +238,18 @@ function buildExport() {
   const scenarioBits = [];
   const grab = (id) => (chosen(id, first) || "").trim();
   scenarioBits.push(HOW_TO_RUN);
-  const engine = plotEngine(first, chosen("first_name", first) || charName(0));
+  const engine = state.ai.on && state.aiBlocks.plotengine
+    ? state.aiBlocks.plotengine
+    : plotEngine(first, chosen("first_name", first) || charName(0));
   if (engine) scenarioBits.push(engine);
-  const acts = state.acts.filter((a) => (a.title || "").trim() || (a.text || "").trim());
-  if (acts.length) scenarioBits.push(acts.map((a, i) =>
-    `#Act ${i + 1}${a.title ? " – " + a.title.trim() : ""}\n${(a.text || "").trim()}`).join("\n\n"));
+  const written = state.acts.filter((a) => (a.title || "").trim() || (a.text || "").trim());
+  const acts = written.length || !state.ai.on ? written : state.acts;
+  if (acts.length) scenarioBits.push(state.acts.map((act, i) => {
+    const title = (act.title || "").trim();
+    const body = (act.text || "").trim();
+    if (!title && !body && !state.ai.on) return "";
+    return `#Act ${i + 1}${title ? " – " + title : state.ai.on && !title ? " – [name this act]" : ""}\n${body || (state.ai.on ? "[write this act]" : "")}`;
+  }).filter(Boolean).join("\n\n"));
   const world = [grab("world_setting") && `## Setting\n${grab("world_setting")}`,
                  grab("problem") && `## The problem\n${grab("problem")}`,
                  grab("conflict") && `## Sources of conflict\n${grab("conflict")}`].filter(Boolean);
@@ -870,7 +878,11 @@ function renderTags() {
   const picked = Object.keys(state.tags).filter((t) => state.tags[t]);
   main.append(el("p", "blurb", `Tick what fits. These are the tags the sites know — ${TAG_LIMIT} at most on a card.`));
   const counter = el("p", "note", `${picked.length} of ${TAG_LIMIT} picked.`);
-  main.append(counter);
+  const clear = el("button", "mini danger", "Clear all");
+  clear.onclick = () => { state.tags = {}; save(); render(); };
+  const countRow = el("div", "row buttons");
+  countRow.append(counter, clear);
+  main.append(countRow);
 
   for (const block of TAG_GROUPS) {
     main.append(el("h3", "castheading", block.group));
@@ -1025,9 +1037,7 @@ function renderAI() {
     (n, c) => n + ids.filter((id) => (c.values[id] || "").trim()).length, 0);
 
   const go = el("button", "go", "Enhance the card");
-  go.onclick = () => enhanceAll(go);
-  if (state.characters.length > 1)
-    main.append(el("p", "note", `This will run once per character — ${state.characters.length} requests, one after another.`));
+  go.onclick = () => confirmThenEnhance(go, main);
   main.append(go);
   main.append(el("p", "note",
     `${written} field${written === 1 ? "" : "s"} written so far. Nothing you typed is overwritten — the AI version lands beside yours in Review, and you choose which one exports.`));
@@ -1080,13 +1090,12 @@ function renderReview() {
     }
   });
 
-  if (!pairs.some((p) => p.ai)) {
+  const anyAI = pairs.some((p) => p.ai);
+  if (!anyAI) {
     const none = el("div", "card");
-    none.append(el("p", null, "Nothing to compare yet. Turn on AI assist, then run “Enhance the card” — both versions will appear here."));
-    const jump = el("button", "go", "Go to AI assist");
-    jump.onclick = () => { activeSection = "ai"; render(); };
-    none.append(jump);
+    none.append(el("p", "help", "No AI versions to compare — this is the card as you have written it."));
     main.append(none);
+    filePreview(main);
     return;
   }
 
@@ -1115,6 +1124,7 @@ function renderReview() {
     const card = el("div", "card compare");
     const head = el("div", "fieldhead");
     head.append(el("h3", null, pair.label));
+    head.append(el("span", "badge", pair.section));
     head.append(tip(`From ${pair.section}. The version you pick here is the one that goes into the exported card.`));
     if (!pair.ai) head.append(el("span", "badge", "no AI version"));
     else if (!changed) head.append(el("span", "badge", "unchanged"));
@@ -1126,6 +1136,25 @@ function renderReview() {
     card.append(cols);
     main.append(card);
   }
+  filePreview(main);
+}
+
+// The file as it stands right now, with whatever is picked above.
+function filePreview(main) {
+  const card = el("div", "card");
+  const head = el("div", "fieldhead");
+  head.append(el("h3", null, "The file as it stands"));
+  head.append(tip("Everything above, assembled. This is exactly what downloads at the last step."));
+  card.append(head);
+  card.append(el("pre", "output", buildTxt()));
+  const copy = el("button", "ghost", "Copy it");
+  copy.onclick = async () => {
+    await navigator.clipboard.writeText(buildTxt());
+    copy.textContent = "Copied";
+    setTimeout(() => (copy.textContent = "Copy it"), 1500);
+  };
+  card.append(copy);
+  main.append(card);
 }
 
 function versionCol(pair, which, title, text) {
@@ -1182,25 +1211,29 @@ function renderExport() {
 
   const what = usedAI
     ? (who.image
-        ? `Two files: ${name}.txt to paste from, and ${name}.png — the picture with the card written inside it.`
-        : `Two files: ${name}.txt to paste from, and ${name}.json for anything that imports cards. Add a picture on step 1 to get a .png card instead.`)
+        ? `One zip holding ${name}.txt to paste from and ${name}.png — the picture with the card written inside it.`
+        : `One zip holding ${name}.txt to paste from and ${name}.json for anything that imports cards. Add a picture on step 1 to get a .png card instead.`)
     : `One file: ${name}.txt, with each field laid out and labelled for pasting.`;
   box.append(el("p", "help", what));
 
-  const grab = el("button", "go", usedAI ? "Download both files" : "Download the text file");
+  const grab = el("button", "go", usedAI ? "Download the card (.zip)" : "Download the text file");
   grab.onclick = async () => {
     grab.disabled = true;
     try {
-      download(`${name}.txt`, buildTxt());
-      if (usedAI) {
+      if (!usedAI) {
+        download(`${name}.txt`, buildTxt());
+        status("Saved.");
+      } else {
+        const files = [{ name: `${name}.txt`, bytes: textBytes(buildTxt()) }];
         if (who.image) {
           const png = await toPngBytes(who.image);
-          downloadBytes(`${name}.png`, embedCard(png, buildV3Card()), "image/png");
+          files.push({ name: `${name}.png`, bytes: embedCard(png, buildV3Card()) });
         } else {
-          download(`${name}.json`, JSON.stringify(buildCardJson(), null, 2));
+          files.push({ name: `${name}.json`, bytes: textBytes(JSON.stringify(buildCardJson(), null, 2)) });
         }
+        downloadBlob(`${name}.zip`, makeZip(files));
+        status(`Saved ${name}.zip — ${files.map((f) => f.name).join(" and ")} inside.`);
       }
-      status(usedAI ? "Both files saved." : "Saved.");
     } catch (err) { status(err.message, true); }
     finally { grab.disabled = false; }
   };
@@ -1317,6 +1350,49 @@ function buildContext(index) {
   return out;
 }
 
+// Steps that are not finished, in the words of the rail.
+function unfinishedSteps() {
+  return activeSteps()
+    .filter((step) => !["ai", "review", "export", "systems"].includes(step.id))
+    .map((step) => ({ step, status: stepState(step.id) }))
+    .filter(({ status }) => status.state !== "done");
+}
+
+function confirmThenEnhance(button, main) {
+  main.querySelectorAll(".precheck").forEach((n) => n.remove());
+  const loose = unfinishedSteps();
+  if (!loose.length) return enhanceAll(button);
+
+  const card = el("div", "card precheck warn");
+  const problems = loose.filter((l) => l.status.state === "problem");
+  card.append(el("h3", null, problems.length
+    ? "Some steps have a problem, and some are unfinished"
+    : "Some steps are not finished"));
+  card.append(el("p", "help", "The AI works from what is there. Anything still empty is the AI's to invent, which is rarely what you want. Worth a look before you spend a request:"));
+  const list = el("ul", "ridelist");
+  for (const { step, status } of loose) {
+    const what = status.state === "problem" ? "has a problem"
+      : status.state === "empty" ? "nothing written"
+      : `part written${status.count ? ` — ${status.count}` : ""}`;
+    const item = el("li", null, "");
+    const link = el("button", "linky", step.label);
+    link.onclick = () => { activeSection = step.id; render(); };
+    item.append(link, document.createTextNode(` — ${what}`));
+    list.append(item);
+  }
+  card.append(list);
+
+  const row = el("div", "row buttons");
+  const goOn = el("button", "go", "Write it anyway");
+  goOn.onclick = () => { card.remove(); enhanceAll(button); };
+  const stop = el("button", "ghost", "Cancel");
+  stop.onclick = () => card.remove();
+  row.append(goOn, stop);
+  card.append(row);
+  main.append(card);
+  card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
 async function enhanceAll(button) {
   const vendor = VENDORS[state.ai.vendor];
   if (!apiKey && !vendor.keyOptional) return status("Add your API key first.", true);
@@ -1368,12 +1444,17 @@ function loreNotes() {
   }).filter(Boolean).join("\n\n");
 }
 
-// Label -> field id, so a line that comes back can be put where it belongs.
-function lineMap() {
+// Label -> field id, per section. Two sections can use the same label — the
+// profile has a Core Drive and the profiler has a Core drive — so the map has
+// to know which block the line came out of.
+function lineMap(sectionId) {
   const map = {};
-  for (const section of SECTIONS)
-    for (const [id, , , opts = {}] of section.fields)
-      if (opts.line) map[opts.line.toLowerCase()] = id;
+  const take = (fields) => {
+    for (const [id, , , opts = {}] of fields) if (opts.line) map[opts.line.toLowerCase()] = id;
+  };
+  const section = SECTIONS.find((s) => s.id === sectionId);
+  if (section) take(section.fields);
+  if (sectionId === "profile") take(promoted());     // name, gender, age, appearance sit here
   return map;
 }
 
@@ -1381,7 +1462,7 @@ function lineMap() {
 // every "Label: value" line goes back to the field it came from.
 function readReturnedFile(reply) {
   const text = String(reply || "").replace(/```[a-z]*\n?/gi, "");
-  const map = lineMap();
+  let map = lineMap("profile");
   let written = 0;
 
   const fieldBody = (n) => {
@@ -1411,8 +1492,9 @@ function readReturnedFile(reply) {
 
   for (const raw of body.split("\n")) {
     const line = raw.replace(/\r$/, "");
-    const header = line.match(/^\[(.+?)(?:'s Character Profile| psychological profile):/);
+    const header = line.match(/^\[(.+?)('s Character Profile| psychological profile):/);
     if (header) {
+      map = lineMap(header[2].includes("psychological") ? "psych" : "profile");
       flush();
       const found = state.characters.findIndex((c, i) => charName(i).toLowerCase() === header[1].trim().toLowerCase());
       if (found >= 0) character = state.characters[found];
@@ -1434,6 +1516,34 @@ function readReturnedFile(reply) {
     }
   }
   flush();
+
+  const engineAt = text.indexOf("{Plot engine:");
+  if (engineAt >= 0) {
+    const close = text.indexOf("}", engineAt);
+    if (close > 0) {
+      const block = text.slice(engineAt, close + 1).trim();
+      if (!block.includes("[the place this story happens]") && block !== state.aiBlocks.plotengine) {
+        state.aiBlocks.plotengine = block;
+        written++;
+      }
+    }
+  }
+
+  // Acts the author left blank come back written. Ones they wrote are left alone.
+  for (const piece of text.split(/^#Act\s+/m).slice(1)) {
+    const head = piece.match(/^(\d+)\s*(?:[–—-]\s*)?([^\n]*)\n?([\s\S]*)$/);
+    if (!head) continue;
+    const act = state.acts[Number(head[1]) - 1];
+    if (!act) continue;
+    const title = head[2].trim();
+    // the body runs until whatever block comes next
+    const body = head[3].split("\n")
+      .reduce((lines, line) => (lines.done || /^[#{\[]/.test(line.trim()) ? { ...lines, done: true }
+                                                                           : { ...lines, out: [...lines.out, line] }),
+              { out: [], done: false }).out.join("\n").trim();
+    if (!(act.title || "").trim() && title && title !== "[name this act]") { act.title = title; written++; }
+    if (!(act.text || "").trim() && body && body !== "[write this act]") { act.text = body; written++; }
+  }
 
   for (const rule of RULES.filter((r) => r.aiOnly && state.rules[r.id])) {
     const filledIn = captureBlocks(text, rule.text);
@@ -1466,8 +1576,13 @@ function captureBlocks(reply, template) {
 // breaks inside it — the shape is fixed, only the contents change.
 function plotEngine(character, name) {
   const g = (id) => (chosen(id, character) || "").trim().replace(/\.$/, "");
-  const place = g("pe_place"), who = g("pe_inhabitants"), goal = g("pe_goal");
-  const things = g("pe_things"), threat = g("pe_threat"), cost = g("pe_cost");
+  const hole = (text) => (state.ai.on ? text : "");
+  const place = g("pe_place") || hole("[the place this story happens]");
+  const who = g("pe_inhabitants") || hole("[who and what lives there]");
+  const goal = g("pe_goal") || hole("[what they are after]");
+  const things = g("pe_things") || hole("[jobs, people and problems]");
+  const threat = g("pe_threat") || hole("[the threat working in the background]");
+  const cost = g("pe_cost") || hole("[what sitting still costs them]");
   if (!place && !who && !goal) return "";
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   // "a shipment nobody signed for" + " for {{user}} to handle" reads badly
@@ -1589,6 +1704,15 @@ function buildV3Card() {
       extensions: {},
     },
   };
+}
+
+function downloadBlob(filename, blob) {
+  const url = URL.createObjectURL(blob);
+  const link = el("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 function downloadBytes(filename, bytes, type) {

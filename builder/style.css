@@ -308,6 +308,12 @@ button.mini.on { background: var(--acid); border-color: var(--acid); color: #052
 .enginerule { border: 0; border-top: 1px solid var(--line); margin: 1.6rem 0 1.2rem; }
 
 .rulebox { overflow: auto; margin-bottom: 0; }
+.linky {
+  background: none; border: 0; padding: 0; cursor: pointer;
+  color: var(--acid); font: inherit; text-decoration: underline;
+}
+.ridelist { margin: .4rem 0 .8rem; padding-left: 1.2rem; }
+.ridelist li { margin-bottom: .2rem; }
 
 /* --------------------------------------------------------- pick one of three */
 .choices { display: flex; gap: .45rem; flex-wrap: wrap; }
