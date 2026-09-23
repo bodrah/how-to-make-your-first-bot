@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN } from "./fields.js";
-import { VENDORS, parseReply, buildRequest } from "./ai.js";
-import { embedCard, toPngBytes } from "./png.js";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN } from "./fields.js?v=1449ba9";
+import { VENDORS, parseReply, buildRequest } from "./ai.js?v=1449ba9";
+import { embedCard, toPngBytes } from "./png.js?v=1449ba9";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
