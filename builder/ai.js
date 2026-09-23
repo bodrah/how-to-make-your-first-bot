@@ -1,7 +1,7 @@
 // Bring-your-own-key calls, straight from the browser to the vendor.
 // Every vendor here was checked to allow browser (CORS) requests; the key never
 // touches any server of ours, because there isn't one.
-import { MASTER_PROMPT, SINGLE_FIELD_SUFFIX } from "./master-prompt.js?v=7ae476dc";
+import { MASTER_PROMPT, SINGLE_FIELD_SUFFIX } from "./master-prompt.js?v=03a00aaa";
 
 export const VENDORS = {
   anthropic: {
@@ -38,7 +38,7 @@ export const VENDORS = {
         },
         body: JSON.stringify({
           model,
-          max_tokens: 8000,
+          max_tokens: 32000,
           system,
           messages: [{ role: "user", content: parts }],
         }),
@@ -46,6 +46,7 @@ export const VENDORS = {
       if (!r.ok) throw new Error(await errorText(r));
       const data = await r.json();
       if (data.stop_reason === "refusal") throw new Error("The model declined this request.");
+      if (data.stop_reason === "max_tokens") throw new Error(TRUNCATED);
       return (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("");
     },
   },
@@ -75,7 +76,7 @@ export const VENDORS = {
         }),
       });
       if (!r.ok) throw new Error(await errorText(r));
-      return (await r.json()).choices[0].message.content || "";
+      return readChoice(await r.json());
     },
   },
 
@@ -106,11 +107,14 @@ export const VENDORS = {
         body: JSON.stringify({
           system_instruction: { parts: [{ text: system }] },
           contents: [{ role: "user", parts }],
+          generationConfig: { maxOutputTokens: 32000 },
         }),
       });
       if (!r.ok) throw new Error(await errorText(r));
       const data = await r.json();
-      const reply = data.candidates?.[0]?.content?.parts || [];
+      const candidate = data.candidates?.[0] || {};
+      if (candidate.finishReason === "MAX_TOKENS") throw new Error(TRUNCATED);
+      const reply = candidate.content?.parts || [];
       return reply.map((p) => p.text || "").join("");
     },
   },
@@ -153,7 +157,7 @@ export const VENDORS = {
       });
       if (!r.ok) throw new Error(await errorText(r));
       const data = await r.json();
-      return data.choices?.[0]?.message?.content || "";
+      return readChoice(data);
     },
   },
 
@@ -180,7 +184,7 @@ export const VENDORS = {
         }),
       });
       if (!r.ok) throw new Error(await errorText(r));
-      return (await r.json()).choices[0].message.content || "";
+      return readChoice(await r.json());
     },
   },
 };
@@ -208,6 +212,16 @@ async function errorText(response) {
 }
 
 // Models answer with JSON, sometimes wrapped in a fence or a sentence.
+export const TRUNCATED =
+  "The model ran out of room before it finished the card. Pick a model with a longer output limit, or cut a rule or two and run it again.";
+
+// OpenAI-shaped replies, with the same check for a cut-off answer.
+function readChoice(data) {
+  const choice = (data.choices || [])[0] || {};
+  if (choice.finish_reason === "length") throw new Error(TRUNCATED);
+  return (choice.message || {}).content || "";
+}
+
 export function parseReply(text) {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
   const raw = fenced ? fenced[1] : text;

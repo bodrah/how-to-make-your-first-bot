@@ -1,7 +1,7 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=7ae476dc";
-import { VENDORS, buildFileRequest } from "./ai.js?v=7ae476dc";
-import { makeZip, textBytes } from "./zip.js?v=7ae476dc";
-import { embedCard, toPngBytes } from "./png.js?v=7ae476dc";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS , TAG_LIMIT } from "./fields.js?v=03a00aaa";
+import { VENDORS, buildFileRequest } from "./ai.js?v=03a00aaa";
+import { makeZip, textBytes } from "./zip.js?v=03a00aaa";
+import { embedCard, toPngBytes } from "./png.js?v=03a00aaa";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -1551,21 +1551,19 @@ function readReturnedFile(reply) {
 
   lastKept = kept;
 
-  // The blanks sheet comes back filled: one line per field the author left
-  // empty, which is how the scenario fields get written at all.
-  const sheet = text.match(/\[BLANKS[\s\S]*?\]\s*\n([\s\S]*?)(?=\n\s*\n|$)/);
-  if (sheet) {
-    const byLabel = {};
-    for (const section of SECTIONS)
-      for (const [id, label] of section.fields) byLabel[label.toLowerCase()] = id;
-    for (const line of sheet[1].split("\n")) {
-      const pair = line.match(/^(.+?):\s*(.+)$/);
-      if (!pair) continue;
-      const id = byLabel[pair[1].trim().toLowerCase()];
-      const value = pair[2].trim();
-      if (!id || !value || value.startsWith("[FILL")) continue;
-      set(state.characters[0], id, value);
-    }
+  // The blanks come back as "Label: what they wrote". Matched line by line
+  // against the labels we asked for, so a model that reformats the header,
+  // drops it, or answers before echoing the file still lands in the fields.
+  const asked = {};
+  for (const [id, label] of SECTIONS.find((s) => s.scenario).fields)
+    asked[swap(label, state.characters[0]).toLowerCase()] = id;
+  for (const line of text.split("\n")) {
+    const pair = line.match(/^\s*(.+?):\s*(.+?)\s*$/);
+    if (!pair) continue;
+    const id = asked[pair[1].trim().toLowerCase()];
+    const value = pair[2].trim();
+    if (!id || !value || value.startsWith("[FILL") || value.startsWith("[")) continue;
+    set(state.characters[0], id, value);
   }
 
   // Acts the author left blank come back written. Ones they wrote are left alone.
