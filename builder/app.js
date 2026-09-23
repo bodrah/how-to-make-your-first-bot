@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=21999c8";
-import { VENDORS, buildFileRequest } from "./ai.js?v=21999c8";
-import { embedCard, toPngBytes } from "./png.js?v=21999c8";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=2e5ce44";
+import { VENDORS, buildFileRequest } from "./ai.js?v=2e5ce44";
+import { embedCard, toPngBytes } from "./png.js?v=2e5ce44";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -740,12 +740,13 @@ function renderGreeting() {
   sectionHeading(main, "The greeting",
     "The first thing a player reads. Set the scene, put the character in it, and stop somewhere they can answer.",
     TIPS.greeting);
-  castBar(main);
 
+  // One card, one greeting — it is not written per character.
+  const card = state.characters[0];
   const spec = SECTIONS.flatMap((s) => s.fields).find((f) => f[0] === "greeting");
   const [, label, help, opts = {}] = spec;
-  main.append(fieldBox("greeting", label, swap(help, current()), current().values.greeting,
-    (v) => { current().values.greeting = v; }, opts));
+  main.append(fieldBox("greeting", label, swap(help, card), card.values.greeting,
+    (v) => { card.values.greeting = v; }, opts));
 
   const note = el("div", "card");
   note.append(el("h3", null, "Added to the end for you"));
