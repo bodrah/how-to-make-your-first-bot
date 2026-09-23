@@ -6,7 +6,7 @@ export const SECTIONS = [
     id: "bible",
     step: "Step 1",
     title: "Your character's lore",
-    blurb: "The name, then the lore. Everything below the name is only used if you are using AI Assist — answer in plain English, it is what the AI reads before it writes your fields, and none of it is exported.",
+    blurb: "The name, then the lore. Answer in plain English — every one of these goes into the prompt the AI is handed when you run Enhance at step 11. None of it is printed into the card as written.",
     exported: false,
     fields: [
       ["first_name", "Name", "What they are called. First name, full name, a handle — whatever people use for them. Used everywhere, with or without AI assist.",
@@ -42,7 +42,6 @@ export const SECTIONS = [
     exported: true,
     wrap: (name) => [`[${name || "Name"}'s Character Profile:`, "]"],
     fields: [
-      ["background", "Background", "The cover story they tell people. Where they came from and how they got here. No secrets.", { line: "Background" }],
       ["likes", "Likes and Hobbies", "Real things a person would name out loud. Plain list.", { line: "Likes and Hobbies" }],
       ["dislikes", "Dislikes", "Real things a person would name out loud. Plain list.", { line: "Dislikes" }],
       ["personality", "Personality", "How they act with anyone, in any room. Observable behavior, not mood words.", { line: "Personality" }],

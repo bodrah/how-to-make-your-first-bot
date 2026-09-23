@@ -1,7 +1,7 @@
 // Bring-your-own-key calls, straight from the browser to the vendor.
 // Every vendor here was checked to allow browser (CORS) requests; the key never
 // touches any server of ours, because there isn't one.
-import { MASTER_PROMPT, SINGLE_FIELD_SUFFIX } from "./master-prompt.js?v=9fd7737";
+import { MASTER_PROMPT, SINGLE_FIELD_SUFFIX } from "./master-prompt.js?v=6642774";
 
 export const VENDORS = {
   anthropic: {
@@ -219,27 +219,16 @@ export function parseReply(text) {
   return parsed;
 }
 
-export function buildRequest({ askedFor, fieldSpecs, bible, current, instruction }) {
-  const wanted = fieldSpecs
-    .filter((f) => askedFor.includes(f.id))
-    .map((f) => `- ${f.id} — ${f.label}: ${f.help}`)
-    .join("\n");
-  const filled = Object.entries(current)
-    .filter(([, v]) => v && v.trim())
-    .map(([k, v]) => `${k}: ${v}`)
-    .join("\n");
-  const notes = Object.entries(bible)
-    .filter(([, v]) => v && v.trim())
-    .map(([k, v]) => `${k}: ${v}`)
-    .join("\n");
-
+export function buildFileRequest({ file, lore, context, instruction }) {
   const user = [
+    "Here is the export file this builder produced from everything the author filled in. It is exactly the file they are about to download.",
+    "```\n" + file + "\n```",
+    lore ? `THE AUTHOR'S LORE — plain English notes that are NOT in the file. This is the raw material behind the card. Use it; do not paste it back verbatim.\n${lore}` : "",
+    ...(context || []),
     instruction ? `WHAT THE AUTHOR ASKED FOR:\n${instruction}` : "",
-    notes ? `THE AUTHOR'S NOTES (lore bible, plain English):\n${notes}` : "",
-    filled ? `FIELDS ALREADY WRITTEN (keep what works, improve what doesn't):\n${filled}` : "",
-    `WRITE THESE FIELDS:\n${wanted}`,
+    "SEND BACK THE SAME FILE. Same header, same FIELD 1 to FIELD 4 banners, same labels, same brackets, same fixed blocks, same order. Change only the words inside each field's value: fill what is empty, sharpen what is thin, leave alone what is already good. Any line reading [nothing written yet] is yours to write. Return the file and nothing else — no explanation before or after, no code fence.",
   ].filter(Boolean).join("\n\n");
 
-  const system = MASTER_PROMPT + (askedFor.length === 1 ? SINGLE_FIELD_SUFFIX : "");
-  return { system, user };
+  return { system: MASTER_PROMPT, user };
 }
+

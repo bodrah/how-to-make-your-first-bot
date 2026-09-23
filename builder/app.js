@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=9fd7737";
-import { VENDORS, parseReply, buildRequest } from "./ai.js?v=9fd7737";
-import { embedCard, toPngBytes } from "./png.js?v=9fd7737";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=6642774";
+import { VENDORS, buildFileRequest } from "./ai.js?v=6642774";
+import { embedCard, toPngBytes } from "./png.js?v=6642774";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -21,9 +21,15 @@ if (!state.characters) {
   delete state.values; delete state.enhanced; delete state.choice;
 }
 state.characters.forEach((c) => { c.values ||= {}; c.enhanced ||= {}; c.choice ||= {}; });
+state.sideChars ||= [];
+state.embeds ||= [];
 state.acts ||= [];
+state.rules ||= { rule21: true };
+state.rules.rule21 = true;            // the always-21 rule cannot be turned off
 state.trackers ||= {};
 state.tags ||= {};
+state.ai ||= { on: false, vendor: "anthropic", model: "", remember: false, instruction: "",
+               baseUrl: "http://localhost:11434/v1" };
 TRACKERS.filter((t) => t.mandatory).forEach((t) => { state.trackers[t.id] = true; });
 // Four acts is the shape of the method; older saves get topped up to four.
 while (state.acts.length < 4) state.acts.push({ title: "", text: "" });
@@ -229,7 +235,6 @@ function buildExport() {
 
 /* ----------------------------------------------------------------- steps */
 const STEPS = [
-  { id: "ai",       label: "AI assist",   tip: () => TIPS.ai, first: true },
   { id: "bible",    label: "Lore",        tip: () => TIPS.bible },
   { id: "profile",  label: "Personality", tip: () => TIPS.profile },
   { id: "psych",    label: "Psychology",  tip: () => TIPS.psych },
@@ -240,6 +245,7 @@ const STEPS = [
   { id: "trackers", label: "Trackers",    tip: () => TIPS.trackers },
   { id: "systems",  label: "Systems",     tip: () => TIPS.systems },
   { id: "tags",     label: "Tags" },
+  { id: "ai",       label: "AI assist",   tip: () => TIPS.ai },
   { id: "review",   label: "Review",      tip: () => TIPS.review },
   { id: "export",   label: "Export",      tip: () => TIPS.export },
 ];
@@ -315,8 +321,7 @@ function renderRail() {
     const status = stepState(step.id);
     const pill = el("div", `pill status-${status.state}` + (activeSection === step.id ? " on" : ""));
     const go = el("button", "pillbtn");
-    // AI assist is step 0 — it decides how the rest is used
-    const number = steps[0].id === "ai" ? index : index + 1;
+    const number = index + 1;
     go.append(el("span", "pillnum", String(number)));
     go.append(el("span", "pilllabel", step.label));
     if (status.count) go.append(el("span", "pillcount", status.count));
@@ -643,7 +648,8 @@ function renderSection(section) {
   }
   if (state.characters.length > 1)
     main.append(el("p", "note", `Writing ${charName(who)} — character ${who + 1} of ${state.characters.length}.`));
-  if (!section.exported) main.append(el("p", "note", "Not exported. This is yours to think in."));
+  if (!section.exported) main.append(el("p", "note",
+    "Not printed into the card as written. It is raw material — it goes into the prompt the AI is given when you run Enhance."));
   let engineOpen = false;
   for (const [id, label, help, opts = {}] of section.fields) {
     if (opts.plotEngine && !engineOpen) {
@@ -1176,61 +1182,76 @@ function status(message, bad = false) {
   if (message && !bad) setTimeout(() => { bar.className = "status"; }, 4000);
 }
 
+// Everything the builder holds that is not this character's own fields.
+// The model gets the lot, so what it writes fits the card it is going into.
+function buildContext(index) {
+  const out = [];
+  const character = state.characters[index];
+
+  if (state.characters.length > 1)
+    out.push(`THE CAST: ${state.characters.map((c, i) => charName(i)).join(", ")}. You are writing ${charName(index)} only — the others are here so they line up.`);
+
+  if (character.psychAuto)
+    out.push("PSYCHOLOGY: the author handed this whole section to you. Write every psychology field from the lore above.");
+
+  const sides = state.sideChars.map((sc) => {
+    const lines = WPP_FIELDS.filter(([key]) => (sc[key] || "").trim()).map(([key]) => `  ${key}: ${sc[key].trim()}`);
+    if (sc.closer && sc.closer.trim()) lines.push(`  Closing: ${sc.closer.trim()}`);
+    return lines.length ? `${sc.Name || "Unnamed"}:\n${lines.join("\n")}` : "";
+  }).filter(Boolean);
+  if (sides.length) out.push(`SIDE CAST already written (context — do not rewrite them):\n${sides.join("\n")}`);
+
+  const embeds = state.embeds.filter((e) => e && e.trim());
+  if (embeds.length) out.push(`EMBEDS the card carries (messages, phones, letters):\n${embeds.join("\n")}`);
+
+  const acts = state.acts.filter((act) => (act.title || "").trim() || (act.text || "").trim())
+    .map((act, i) => `  Act ${i + 1}${act.title ? ` — ${act.title}` : ""}: ${act.text || ""}`.trim());
+  if (acts.length) out.push(`THE ACTS the story runs through:\n${acts.join("\n")}`);
+
+  const rules = RULES.filter((r) => state.rules[r.id]).map((r) => `  ${r.name}`);
+  if (rules.length) out.push(`RULES switched on in this card — write nothing that fights them:\n${rules.join("\n")}`);
+
+  const trackers = TRACKERS.filter((t) => state.trackers[t.id]).map((t) => `  ${t.name}`);
+  if (trackers.length) out.push(`TRACKERS this card runs:\n${trackers.join("\n")}`);
+
+  const tags = Object.keys(state.tags).filter((t) => state.tags[t]);
+  if (tags.length) out.push(`TAGS the author picked — the card has to earn every one of them:\n  ${tags.join(", ")}`);
+
+  out.push(`FIXED BLOCKS the tool adds after you: the always-21 rule, the how-to-run-this-story block, and the Scene Continuity Tracker. Do not write them, do not repeat them, do not contradict them.`);
+  return out;
+}
+
 async function enhanceAll(button) {
   const vendor = VENDORS[state.ai.vendor];
   if (!apiKey && !vendor.keyOptional) return status("Add your API key first.", true);
   const model = state.ai.model || vendor.fallbackModels[0];
   if (!model) return status("Pick a model first.", true);
 
-  const fieldIds = SECTIONS.filter((s) => s.exported).flatMap((s) => s.fields.map((f) => f[0]));
-  const specs = SECTIONS.flatMap((s) => s.fields.map(([id, label, help]) => ({ id, label, help })));
-
   const anything = state.characters.some((c) => Object.values(c.values).some((v) => (v || "").trim()));
-  if (!anything) return status("Write something first — the model works from your notes and fields.", true);
+  if (!anything) return status("Write something first — the model works from what you put in.", true);
 
   button.disabled = true;
   const label = button.textContent;
-  let written = 0;
+  button.textContent = "Writing…";
 
   try {
-    for (let index = 0; index < state.characters.length; index++) {
-      const character = state.characters[index];
-      const bible = {};
-      for (const [id, fieldLabel] of SECTIONS[0].fields)
-        if (character.values[id]) bible[fieldLabel] = character.values[id];
-      const filled = {};
-      for (const id of fieldIds) if (character.values[id]) filled[id] = character.values[id];
-      if (!Object.keys(bible).length && !Object.keys(filled).length) continue;
+    status(`Sending the whole build to ${vendor.label} (${model})…`);
+    const { system, user } = buildFileRequest({
+      file: buildTxt(),
+      lore: loreNotes(),
+      context: buildContext(0),
+      instruction: state.ai.instruction,
+    });
+    const image = state.characters.find((c) => c.image);
+    const reply = await vendor.complete(apiKey, model, system, user,
+      { baseUrl: state.ai.baseUrl, image: image ? image.image : null });
 
-      // Everyone else in the build, so the model writes them as one cast.
-      const seeing = character.image ? "A picture of this character is attached — write the appearance from what you can see in it." : "";
-      const castNote = state.characters.length > 1
-        ? `This build has ${state.characters.length} characters: ${state.characters.map((c, i) => charName(i)).join(", ")}. You are writing ${charName(index)} only.`
-        : "";
-
-      button.textContent = state.characters.length > 1
-        ? `Writing ${charName(index)} (${index + 1}/${state.characters.length})…` : "Writing…";
-      status(`Asking ${vendor.label} (${model}) for ${charName(index)}…`);
-
-      const { system, user } = buildRequest({
-        askedFor: fieldIds, fieldSpecs: specs, bible, current: filled,
-        instruction: [seeing, castNote, state.ai.instruction].filter(Boolean).join("\n\n"),
-      });
-      const reply = await vendor.complete(apiKey, model, system, user,
-        { baseUrl: state.ai.baseUrl, image: character.image });
-      const { fields } = parseReply(reply);
-      for (const [id, value] of Object.entries(fields)) {
-        if (!fieldIds.includes(id) || !value || !String(value).trim()) continue;
-        character.enhanced[id] = String(value).trim();
-        if (!character.choice[id]) character.choice[id] = "mine";
-        written++;
-      }
-      save();
-    }
-    if (!written) throw new Error("The model returned nothing usable.");
+    const written = readReturnedFile(reply);
+    if (!written) throw new Error("The model sent back something this builder could not read. Try again, or try a stronger model.");
+    save();
     activeSection = "review";
     render();
-    status(`${written} field${written === 1 ? "" : "s"} written across ${state.characters.length} character${state.characters.length === 1 ? "" : "s"}. Yours are untouched — compare and pick.`);
+    status(`${written} field${written === 1 ? "" : "s"} came back. Yours are untouched — compare them and pick.`);
   } catch (err) {
     status(err.message, true);
     save();
@@ -1238,6 +1259,82 @@ async function enhanceAll(button) {
     button.disabled = false;
     button.textContent = label;
   }
+}
+
+// The lore is the only thing not already in the file, so it rides along.
+function loreNotes() {
+  const bible = SECTIONS[0];
+  return state.characters.map((character, index) => {
+    const lines = bible.fields
+      .filter(([id]) => (character.values[id] || "").trim())
+      .map(([id, fieldLabel]) => `  ${swap(fieldLabel, character)}: ${character.values[id].trim()}`);
+    return lines.length ? `${charName(index)}:\n${lines.join("\n")}` : "";
+  }).filter(Boolean).join("\n\n");
+}
+
+// Label -> field id, so a line that comes back can be put where it belongs.
+function lineMap() {
+  const map = {};
+  for (const section of SECTIONS)
+    for (const [id, , , opts = {}] of section.fields)
+      if (opts.line) map[opts.line.toLowerCase()] = id;
+  return map;
+}
+
+// Read the file the model sent back. Same shape as the one it was given, so
+// every "Label: value" line goes back to the field it came from.
+function readReturnedFile(reply) {
+  const text = String(reply || "").replace(/```[a-z]*\n?/gi, "");
+  const map = lineMap();
+  let written = 0;
+
+  const fieldBody = (n) => {
+    const match = text.match(new RegExp(`FIELD ${n} — [A-Z]+[\\s\\S]*?\\n[━]+\\n([\\s\\S]*?)(?=\\n[━]+\\nFIELD |$)`));
+    return match ? match[1].trim() : "";
+  };
+
+  const set = (character, id, value) => {
+    const clean = String(value || "").trim();
+    if (!clean || !id) return;
+    const own = (chosen(id, character) || "").trim();
+    if (clean === own) return;                       // unchanged, nothing to compare
+    character.enhanced[id] = clean;
+    if (!character.choice[id]) character.choice[id] = "mine";
+    written++;
+  };
+
+  const opening = fieldBody(3);
+  if (opening) set(state.characters[0], "greeting", opening);
+
+  const body = fieldBody(4) || text;
+  let character = state.characters[0];
+  let currentId = null;
+  let buffer = [];
+  const flush = () => { if (currentId) set(character, currentId, buffer.join("\n")); currentId = null; buffer = []; };
+
+  for (const raw of body.split("\n")) {
+    const line = raw.replace(/\r$/, "");
+    const header = line.match(/^\[(.+?)(?:'s Character Profile| psychological profile):/);
+    if (header) {
+      flush();
+      const found = state.characters.findIndex((c, i) => charName(i).toLowerCase() === header[1].trim().toLowerCase());
+      if (found >= 0) character = state.characters[found];
+      continue;
+    }
+    const pair = line.match(/^([A-Za-z][A-Za-z '\/{}|-]{1,40}):\s*(.*)$/);
+    if (pair && map[pair[1].trim().toLowerCase()]) {
+      flush();
+      currentId = map[pair[1].trim().toLowerCase()];
+      buffer = pair[2] ? [pair[2]] : [];
+      continue;
+    }
+    if (currentId) {
+      if (/^[\]}]/.test(line.trim()) || /^\[/.test(line.trim())) { flush(); continue; }
+      buffer.push(line);
+    }
+  }
+  flush();
+  return written;
 }
 
 // The shape SillyTavern and Chub read. Description carries the profile blocks;
