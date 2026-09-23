@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER } from "./fields.js?v=c4ae294";
-import { VENDORS, parseReply, buildRequest } from "./ai.js?v=c4ae294";
-import { embedCard, toPngBytes } from "./png.js?v=c4ae294";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER } from "./fields.js?v=6e19d96";
+import { VENDORS, parseReply, buildRequest } from "./ai.js?v=6e19d96";
+import { embedCard, toPngBytes } from "./png.js?v=6e19d96";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -288,7 +288,9 @@ function renderRail() {
   steps.forEach((step, index) => {
     const pill = el("div", "pill" + (activeSection === step.id ? " on" : "") + (stepDone(step.id) ? " done" : ""));
     const go = el("button", "pillbtn");
-    go.append(el("span", "pillnum", String(index + 1)));
+    // AI assist is step 0 — it decides how the rest is used
+    const number = steps[0].id === "ai" ? index : index + 1;
+    go.append(el("span", "pillnum", String(number)));
     go.append(el("span", "pilllabel", step.label));
     const count = stepCount(step.id);
     if (count) go.append(el("span", "pillcount", count));
@@ -303,7 +305,9 @@ function renderRail() {
   });
 
   const index = Math.max(0, steps.findIndex((s) => s.id === activeSection));
-  $("#progress").textContent = `Step ${index + 1} of ${steps.length} · ${steps[index].label}`;
+  const zeroBased = steps[0].id === "ai";
+  $("#progress").textContent =
+    `Step ${zeroBased ? index : index + 1} of ${zeroBased ? steps.length - 1 : steps.length} · ${steps[index].label}`;
   const back = $("#back"), next = $("#next");
   back.disabled = index === 0;
   next.disabled = index === STEPS.length - 1;
