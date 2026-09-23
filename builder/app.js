@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=6642774";
-import { VENDORS, buildFileRequest } from "./ai.js?v=6642774";
-import { embedCard, toPngBytes } from "./png.js?v=6642774";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN , TRACKERS , MANDATORY_TRACKER , TAG_GROUPS } from "./fields.js?v=a18c9b3";
+import { VENDORS, buildFileRequest } from "./ai.js?v=a18c9b3";
+import { embedCard, toPngBytes } from "./png.js?v=a18c9b3";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -100,6 +100,7 @@ const TIPS = {
   side: "W++ sheets for characters who need depth but not a full build — big enough to matter, small enough not to be the lead.",
   embeds: "One-liners for throwaway characters. Defining them stops the model inventing someone inconsistent, and it lets a lorebook hook onto the name.",
   rules: "Optional blocks you paste with the card. Tick only the ones a build actually needs.",
+  greeting: "The opening message, and the rules and trackers that get repeated with it so the first reply already obeys them.",
   trackers: "The little status lines the bot prints under every reply. Tick the ones this card should show the player.",
   systems: "A collection of rules and trackers that work together, for things like RPGs. Currently in development.",
   ai: "Optional. Write your bot in plain english, describe what you want in each of the previous sections, then run Enhance the card at the end. The AI takes all of your fields, reads what you wrote, and expands it. You do not use what it gives you as is — it is your starting point.",
@@ -239,8 +240,8 @@ const STEPS = [
   { id: "profile",  label: "Personality", tip: () => TIPS.profile },
   { id: "psych",    label: "Psychology",  tip: () => TIPS.psych },
   { id: "side",     label: "Side cast",   tip: () => TIPS.side },
-  { id: "embeds",   label: "Embeds",      tip: () => TIPS.embeds },
   { id: "scenario", label: "Scenario",    tip: () => TIPS.scenario },
+  { id: "greeting", label: "Greeting",    tip: () => TIPS.greeting },
   { id: "rules",    label: "Rules",       tip: () => TIPS.rules },
   { id: "trackers", label: "Trackers",    tip: () => TIPS.trackers },
   { id: "systems",  label: "Systems",     tip: () => TIPS.systems },
@@ -261,6 +262,7 @@ function stepState(id) {
       for (const field of section.fields) {
         // a section handed to the AI is not counted against the author
         if (section.id === "psych" && character.psychAuto) continue;
+        if ((field[3] || {}).ownStep) continue;     // counted on its own step
         total++;
         const value = character.values[field[0]] || "";
         if (value.trim()) filled++;
@@ -279,12 +281,17 @@ function stepState(id) {
     return { state: filled >= total ? "done" : "part", count: `${filled}/${total}` };
   }
 
-  if (id === "side" || id === "embeds") {
-    const items = id === "side" ? state.sideChars.length : state.embeds.filter(Boolean).length;
-    const problem = (id === "side" ? state.sideChars : state.embeds).some((entry) =>
+  if (id === "side") {
+    const items = state.sideChars.length + state.embeds.filter(Boolean).length;
+    const problem = [...state.sideChars, ...state.embeds].some((entry) =>
       Object.values(typeof entry === "string" ? { entry } : entry).some((v) => lintText(v || "").length));
     if (problem) return { state: "problem", count: String(items) };
-    return { state: items ? "done" : "empty", count: String(items) };   // both are optional
+    return { state: items ? "done" : "empty", count: String(items) };   // all of it is optional
+  }
+  if (id === "greeting") {
+    const value = (chosen("greeting", state.characters[0]) || "").trim();
+    if (lintText(value).length) return { state: "problem", count: "" };
+    return { state: value ? "done" : "empty", count: "" };
   }
   if (id === "rules" || id === "trackers") {
     const on = id === "rules" ? Object.values(state.rules).filter(Boolean).length
@@ -652,6 +659,7 @@ function renderSection(section) {
     "Not printed into the card as written. It is raw material — it goes into the prompt the AI is given when you run Enhance."));
   let engineOpen = false;
   for (const [id, label, help, opts = {}] of section.fields) {
+    if (opts.ownStep) continue;
     if (opts.plotEngine && !engineOpen) {
       engineOpen = true;
       const head = el("div", "fieldhead enginehead");
@@ -692,11 +700,13 @@ function renderSideChars() {
   const add = el("button", "go", "Add a side character");
   add.onclick = () => { state.sideChars.push({}); save(); render(); };
   main.append(add);
+
+  renderEmbeds(main);
 }
 
-function renderEmbeds() {
-  const main = $("#main");
-  sectionHeading(main, "Character Embeds",
+function renderEmbeds(main) {
+  main.append(el("hr", "enginerule"));
+  sectionHeading(main, "Character embeds",
     "Okay but what if this is a throw away character, I want it to appear maybe once so it really doesn't need very much attention at all? Simply fill this out to define your very minor npc.",
     TIPS.embeds);
   main.append(el("p", "note", "[Name — age:XX;gender:X;appearance:tag,tag,tag,tag,tag,tag. One or two personality sentences.]"));
@@ -713,6 +723,29 @@ function renderEmbeds() {
   const add = el("button", "go", "Add an embed");
   add.onclick = () => { state.embeds.push(""); save(); render(); };
   main.append(add);
+}
+
+function renderGreeting() {
+  const main = $("#main");
+  sectionHeading(main, "The greeting",
+    "The first thing a player reads. Set the scene, put the character in it, and stop somewhere they can answer.",
+    TIPS.greeting);
+  castBar(main);
+
+  const spec = SECTIONS.flatMap((s) => s.fields).find((f) => f[0] === "greeting");
+  const [, label, help, opts = {}] = spec;
+  main.append(fieldBox("greeting", label, swap(help, current()), current().values.greeting,
+    (v) => { current().values.greeting = v; }, opts));
+
+  const note = el("div", "card");
+  note.append(el("h3", null, "What rides along with it"));
+  note.append(el("p", "help", "The greeting goes into its own slot on every site, away from the instructions — so the rules and trackers this card runs are repeated underneath it. That way the very first reply already keeps to them."));
+  const list = el("ul", "ridelist");
+  for (const rule of RULES.filter((r) => state.rules[r.id])) list.append(el("li", null, rule.name));
+  for (const tracker of TRACKERS.filter((t) => state.trackers[t.id])) list.append(el("li", null, `${tracker.icon} ${tracker.name}`));
+  list.append(el("li", null, "Scene Continuity Tracker"));
+  note.append(list);
+  main.append(note);
 }
 
 function renderRules() {
@@ -1158,7 +1191,7 @@ function render() {
   const section = SECTIONS.find((s) => s.id === activeSection);
   if (section) renderSection(section);
   else if (activeSection === "side") renderSideChars();
-  else if (activeSection === "embeds") renderEmbeds();
+  else if (activeSection === "greeting") renderGreeting();
   else if (activeSection === "rules") renderRules();
   else if (activeSection === "trackers") renderTrackers();
   else if (activeSection === "tags") renderTags();
