@@ -313,7 +313,7 @@ export const TAG_GROUPS = [
   { group: "Tone and genre", tags: ["story driven", "sex driven", "hidden plot", "emotional", "comedy", "romantic comedy", "slice of life", "wholesome", "dark", "dark romance", "gritty", "dead dove", "superhero", "supernatural", "myths and legends", "greek mythology", "another world [isekai]", "roleplaying game (rpg)", "gaming", "tech"] },
   { group: "Setting", tags: ["modern", "modern setting", "apartment", "small town", "forest", "border", "ohio"] },
   { group: "Relationship", tags: ["enemies to lovers", "slow burn", "push-pull", "codependent", "toxic", "mutual destruction", "obsessive", "possessive", "fix her", "incest"] },
-  { group: "The character", tags: ["himbo", "cinnamon roll", "brat", "goth", "witch", "prankster", "baker", "pastor", "youtuber", "divine", "divine [divinity]", "goddesses", "virgin goddesses", "artemis", "athena", "hestia", "cursed", "multiple characters", "multi-persona", "solo"] },
+  { group: "The character", tags: ["himbo", "cinnamon roll", "brat", "goth", "witch", "prankster", "baker", "pastor", "youtuber", "mafia", "divine", "divine [divinity]", "goddesses", "virgin goddesses", "cursed", "multiple characters", "multi-persona", "solo"] },
   { group: "Who with who", tags: ["straight", "lesbian", "bisexual", "futanari", "female/female on male (ffm)", "group", "multiple partners", "moresome (4 or more partners)"] },
   { group: "Explicit", tags: ["kinky", "hardcore", "breeding", "creampie", "vaginal", "oral", "degradation", "CNC", "bound", "angry sex", "public sex", "bargaining sex", "power"] },
   { group: "Heavy going", tags: ["trauma", "drugs", "secrets", "secret"] },
