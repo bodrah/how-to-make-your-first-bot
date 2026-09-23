@@ -1,6 +1,6 @@
-import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN } from "./fields.js?v=85f3c15";
-import { VENDORS, parseReply, buildRequest } from "./ai.js?v=85f3c15";
-import { embedCard, toPngBytes } from "./png.js?v=85f3c15";
+import { SECTIONS, WPP_FIELDS, WPP_CLOSER, RULES, LINTS, HOW_TO_RUN } from "./fields.js?v=6a94c21";
+import { VENDORS, parseReply, buildRequest } from "./ai.js?v=6a94c21";
+import { embedCard, toPngBytes } from "./png.js?v=6a94c21";
 
 const STORE = "skeletor-bot-builder-v1";
 const KEYSTORE = "skeletor-bot-builder-key";
@@ -191,6 +191,8 @@ function buildExport() {
   const scenarioBits = [];
   const grab = (id) => (chosen(id, first) || "").trim();
   scenarioBits.push(HOW_TO_RUN);
+  const engine = plotEngine(first, chosen("first_name", first) || charName(0));
+  if (engine) scenarioBits.push(engine);
   const acts = state.acts.filter((a) => (a.title || "").trim() || (a.text || "").trim());
   if (acts.length) scenarioBits.push(acts.map((a, i) =>
     `#Act ${i + 1}${a.title ? " – " + a.title.trim() : ""}\n${(a.text || "").trim()}`).join("\n\n"));
@@ -566,8 +568,21 @@ function renderSection(section) {
   if (state.characters.length > 1)
     main.append(el("p", "note", `Writing ${charName(who)} — character ${who + 1} of ${state.characters.length}.`));
   if (!section.exported) main.append(el("p", "note", "Not exported. This is yours to think in."));
+  let engineOpen = false;
   for (const [id, label, help, opts = {}] of section.fields) {
-    main.append(fieldBox(id, label, help, current().values[id],
+    if (opts.plotEngine && !engineOpen) {
+      engineOpen = true;
+      const head = el("div", "fieldhead enginehead");
+      head.append(el("h3", null, "The plot engine"));
+      head.append(tip("One block that keeps the story moving on its own: what lives in the place, what the character is after, what the player has to deal with, and what it costs them to sit still. Fill the parts and it assembles itself."));
+      main.append(head);
+      main.append(el("p", "help", "Short answers. They get written into a single block in the exact shape the method uses."));
+    }
+    if (!opts.plotEngine && engineOpen) {
+      engineOpen = false;
+      main.append(el("hr", "enginerule"));
+    }
+    main.append(fieldBox(id, label.replace(/^Plot engine · /, ""), help, current().values[id],
       (v) => { current().values[id] = v; }, opts));
   }
 }
@@ -1055,6 +1070,19 @@ async function enhanceAll(button) {
 
 // The shape SillyTavern and Chub read. Description carries the profile blocks;
 // scenario and the opening message get their own slots, as the format expects.
+// His plot engine, filled from the slots. One block, flowing text, no line
+// breaks inside it — the shape is fixed, only the contents change.
+function plotEngine(character, name) {
+  const g = (id) => (chosen(id, character) || "").trim().replace(/\.$/, "");
+  const place = g("pe_place"), who = g("pe_inhabitants"), goal = g("pe_goal");
+  const things = g("pe_things"), threat = g("pe_threat"), cost = g("pe_cost");
+  if (!place && !who && !goal) return "";
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  // "a shipment nobody signed for" + " for {{user}} to handle" reads badly
+  const handle = /\bfor$/i.test(things) ? `${things}, for` : `${things} for`;
+  return `{Plot engine: All manner of things live in ${place || "this place"}, ${who || "its people"}, and something is always about to happen. Do not let {{user}} fall into an endless sex loop. ${cap(place || "the place")} keeps moving whether or not {{user}} acts. ${name} wants ${goal || "what they are after"}, and their goal is to have {{user}} help them get it. Create ${things ? handle : "jobs, people, and problems for"} {{user}} to handle, with and without ${name} present. ${cap(threat || "the threat")} works the whole time. When {{user}} is idle, ${cost || "it costs them something"}. Create plots that lead toward what ${name} hides, so {{user}} can progress the plot through events. If {{user}} gets stuck having sex with ${name}, ${name} ends it and moves the story on. Regarding sex, create complications and let ${name} refuse on their own terms, because they decide when, never {{user}}. You have failed as GameMaster if you are not giving {{user}} things to do, people to deal with, and a place to move through beyond their bed.}`;
+}
+
 function buildCardJson() {
   const first = state.characters[0];
   const grab = (id) => (chosen(id, first) || "").trim();
