@@ -1,22 +1,27 @@
-// Every field in the builder, in export order.
-// `help` text is Skeletor's own wording from the guide — the field descriptions
-// are the teaching, so they stay verbatim.
+// Every field in the builder, in export order. Storycard v5.
+//
+// One fact, one place. A field never restates what another field already
+// said, because each one does a different job:
+//   Hard Rules   — conduct, locks, kinks the GameMaster must use, the voice line
+//   Profile      — what a stranger can see
+//   Psychology   — an outside analyst on why the character is this way
+//   Scenario     — the plot engine, the numbered plots, the secrets, the trackers
+//   Rules file   — the rule blocks, shipped as their own file
+
 export const SECTIONS = [
   {
     id: "bible",
     step: "Step 1",
     title: "Your character's lore",
-    blurb: "The name, then the lore. Answer in plain English — every one of these goes into the prompt the AI is handed when you run Enhance at step 11. None of it is printed into the card as written.",
+    blurb: "The name, then the lore. Answer in plain English. This is the raw material behind the card — none of it is printed into the card as written, and with AI assist on it is what the model works from.",
     exported: false,
     fields: [
       ["first_name", "Name", "What they are called. First name, full name, a handle — whatever people use for them. Used everywhere, with or without AI assist.",
-        { line: "Name", short: true, placeholder: "Belle", always: true }],
-      ["gender", "Gender", "Male, female, or other. Everything below changes to match.",
-        { line: "Gender", choices: ["Male", "Female", "Other"], always: true }],
+        { line: "First name", short: true, placeholder: "Belle", always: true }],
+      ["gender", "Gender", "Male, female, or other. Every pronoun in the Hard Rules follows it.",
+        { line: null, choices: ["Male", "Female", "Other"], always: true }],
       ["age", "Age", "A number, and it must be 18 or older. Apparent age plus real age if they differ.",
         { line: "Age", short: true, minAge: 18, placeholder: "27", always: true }],
-      ["appearance", "Appearance", "Height, build, skin, hair, eyes, face, what they wear, what they carry.",
-        { line: "Appearance", always: true, placeholder: "5'4\", soft and curvy, light brown hair usually clipped up, brown eyes, no makeup most days. Oversized t-shirts and thick socks at home." }],
       ["seed", "The premise", "What is the core of this character? One line. A premise, a job, a wound, an image.",
         { tip: "The short version of who this is, before any detail — what you would say if somebody asked and you had one sentence." }],
       ["wound", "The defining wound", "What is the one thing that shaped who {they} {are} now?"],
@@ -31,241 +36,165 @@ export const SECTIONS = [
       ["fall", "The fall", "How did the turn cascade into where {they} {are} now?"],
       ["now", "Now, on the outside", "{Their} life as it stands: where {they} live, how {they} pay for it, who is around. And the one good thing in it."],
       ["interior", "Now, on the inside", "The same day from the inside: how the wound sits now, how {they} {are} during intimacy, what {they} see looking at {themself}. One insecurity. One want."],
-      ["secrets", "Secrets", "Which of the buried facts go in the gated block for the card?"],
     ],
   },
   {
     id: "profile",
-    step: "Step 2",
-    title: "The Personality",
-    blurb: "Short concise who they are goes here.",
+    step: "Step 3",
+    title: "Character Profile",
+    blurb: "What a stranger can see. The body, the cover story, likes, dislikes. Nothing else — the Hard Rules hold how they behave, and the psychological profile holds why.",
     exported: true,
     wrap: (name) => [`[${name || "Name"}'s Character Profile:`, "]"],
     fields: [
-      ["likes", "Likes and Hobbies", "Real things a person would name out loud. Plain list.", { line: "Likes and Hobbies" }],
-      ["dislikes", "Dislikes", "Real things a person would name out loud. Plain list.", { line: "Dislikes" }],
-      ["personality", "Personality", "How they act with anyone, in any room. Observable behavior, not mood words.", { line: "Personality" }],
-      ["core_drive", "Core Drive", "The one thing they want most, and what they will do to get it.", { line: "Core Drive" }],
-      ["voice", "Voice", "How they sound. Pitch, pace, volume, accent. Ends with one short line in their voice. Struggling? Name an actor or a character who sounds right and the AI will adapt it — it writes the qualities of that voice and never references the work itself, so nothing copyrighted ends up in your card.",
-        { line: "Voice", placeholder: "Low and unhurried, a half-beat slower than the room. Think the way Mark talks when he is already sure how it ends. \"You will call me. Not tonight, but you will.\"" }],
-      ["dyn_user", "Dynamics with {{user}}", "How they treat the player across the whole story. Not the first message.", { line: "Dynamics with {{user}}" }],
-      ["dyn_named", "Dynamics with named characters", "One line each, one per row. Write it plainly — the example below assumes you are using AI Assist, so a rough line is enough for it to work from.",
-        { line: null, perLine: "Dynamics with ",
-          placeholder: "Mark: owes him money and will not say what for, so she is sweet to him in front of people and avoids him alone.\nDelia: grew up with her, the only person she does not perform for." }],
-      ["dyn_everyone", "Dynamics with everyone else", "How they treat strangers, friends, enemies.", { line: "Dynamics with everyone else" }],
-      ["romance", "Response to romance", "How they react when someone wants them.", { line: "Response to romance" }],
-      ["kinks", "Sexual Desires / Kinks", "What they like in bed. Plain list.", { line: "Sexual Desires / Kinks" }],
-      ["views_sex", "Views on Sex", "What sex means to them.", { line: "Views on Sex" }],
-      ["during_sex", "Behavior during sex", "What they do, how they talk, what they do after, what makes them stop.", { line: "Behavior during sex" }],
+      ["appearance", "Appearance", "A stat block, not prose: items separated by semicolons. Height; build; breasts; waist; hips; ass; thighs; skin; hair; eyes, then clothing. Clothing is the kinds of clothes they wear plus any style rule, never one outfit. If the sex scenes need a fixed body, end with the body facts the GameMaster must not change.",
+        { line: "Appearance", always: true,
+          placeholder: "5'4\"; soft and curvy; full breasts; narrow waist; wide hips; heavy ass; thick thighs; light brown skin; dark hair past the shoulders, usually clipped up; brown eyes; oversized shirts, thick socks, cotton underwear, nothing fitted" }],
+      ["background", "Background", "Prose. The cover story they tell people — the version anyone at the door would get. No secret leaks into this field.",
+        { line: "Background" }],
+      ["likes", "Likes and Hobbies", "A stat block: items separated by semicolons. Things that work in a turn of text roleplay.",
+        { line: "Likes and Hobbies", placeholder: "late films; cooking for other people; cold weather; card games she can win" }],
+      ["dislikes", "Dislikes", "A stat block: items separated by semicolons.",
+        { line: "Dislikes", placeholder: "being rushed; people who talk over her; the smell of bleach; owing anybody" }],
     ],
   },
   {
     id: "psych",
-    step: "Step 2",
+    step: "Step 4",
     title: "Psychological profile",
-    blurb: "This section is written from the perspective of an FBI profiler I use Claude to write this section, editing it so it sounds good.",
+    blurb: "An outside analyst's case assessment of this person. Flat, clinical, certain, in the third person. It explains the cause behind behaviour the profile only shows — it never restates the profile, and no secret appears in it.",
     exported: true,
     wrap: (name) => [`[${name || "Name"} psychological profile:`, "]"],
     fields: [
-      ["attachment", "Attachment", "How they bond with people and how they let go.", { line: "Attachment" }],
-      ["p_core_drive", "Core drive", "The fear or need under the surface drive.", { line: "Core drive" }],
-      ["formative", "Formative pattern", "The real events that made them this way. Keep secrets vague here.", { line: "Formative pattern" }],
-      ["method", "Method", "How they get what they want from people.", { line: "Method" }],
-      ["escalation", "Escalation", "What they do when pushed.", { line: "Escalation" }],
-      ["hard_line", "Hard line", "What they will never do.", { line: "Hard line" }],
-      ["vulnerabilities", "Vulnerabilities", "What gets past their guard.", { line: "Vulnerabilities" }],
-      ["prognosis", "Prognosis", "Where their life goes if nothing changes.", { line: "Prognosis" }],
+      ["p_core_drive", "Core drive", "What the person needs most, and what that need makes them read as a win.", { line: "Core drive" }],
+      ["formative", "Formative pattern", "What shaped the person, at cover-story level only. The real version stays in the gated secrets.", { line: "Formative pattern" }],
+      ["method", "Method", "How the person works on somebody new. What they push and what they test.", { line: "Method" }],
+      ["escalation", "Escalation", "What the person does when refused, and what it looks like when they go quiet instead.", { line: "Escalation" }],
+      ["hard_line", "Hard line", "What the person will not accept from anyone.", { line: "Hard line" }],
+      ["vulnerabilities", "Vulnerabilities", "The specific things that get through. A situation, a kind of question, being caught without a plan.", { line: "Vulnerabilities" }],
+      ["prognosis", "Prognosis", "Where the person ends up if nobody stops them.", { line: "Prognosis" }],
     ],
   },
   {
     id: "scenario",
     step: "Step 6",
     title: "The scenario",
-    blurb: "The story around the character: how it is run, where it goes, what the world is, and what the player has to earn rather than be told.",
+    blurb: "The plot engine, then the numbered plots, then what the player must never be told. No rules go in here — the rule blocks ship as their own file.",
     exported: true,
     scenario: true,
     fields: [
-      ["pe_place", "Plot engine · where this happens",
-       "The place the story lives in. Named plainly — a town, a house, a ship.",
+      ["pe_beings", "Plot engine · what kind of people live there",
+       "One word or two. People, beings, crews — whatever the place is full of.",
+       { plotEngine: true, short: true, placeholder: "people" }],
+      ["pe_place", "Plot engine · the place",
+       "Named plainly. A town, a house, a ship, a district.",
        { plotEngine: true, short: true, placeholder: "the dock district" }],
       ["pe_inhabitants", "Plot engine · who lives there",
-       "Three to five kinds of people or things a player could run into, separated by commas. Never the place itself — what moves around in it.",
-       { plotEngine: true, short: true, placeholder: "dockhands, loan men, a harbour cop who looks the other way, girls working the late bar" }],
+       "Three to five kinds of people a player could run into, separated by commas. Never the place itself.",
+       { plotEngine: true, short: true, placeholder: "dockhands, loan men, a harbour cop who looks the other way, women working the late bar" }],
       ["pe_goal", "Plot engine · what the character wants",
-       "Said outright, and what they want the player to help them do about it.",
+       "Said outright, in one line.",
        { plotEngine: true, short: true, placeholder: "the debt cleared before the end of the month" }],
-      ["pe_things", "Plot engine · things for the player to handle",
-       "Four, separated by commas. Jobs, people, problems — with and without the character present.",
+      ["pe_help", "Plot engine · what they want {{user}} to help them do",
+       "The act, not the feeling.",
+       { plotEngine: true, short: true, placeholder: "collect what she is owed without the loan men hearing about it" }],
+      ["pe_trouble", "Plot engine · kinds of trouble for {{user}} to handle",
+       "Four, separated by commas. With and without the character present.",
        { plotEngine: true, short: true, placeholder: "collections that go wrong, a cop asking questions, a rival bar, a shipment nobody signed for" }],
-      ["pe_threat", "Plot engine · the threat, and what it does unopposed",
-       "Who or what is working the whole time, and what it does when nobody stands in the way.",
-       { plotEngine: true, short: true, placeholder: "the loan men keep calling in what they are owed, taking a piece of the bar each week" }],
-      ["pe_cost", "Plot engine · what it costs when the player does nothing",
+      ["pe_antagonists", "Plot engine · what the antagonists do, and what makes each one show up",
+       "Name them. Give every one a way in — when the plots call for them, or when {{user}} makes noise.",
+       { plotEngine: true, placeholder: "Dessel sends two men round on collection nights and comes himself when a payment is missed. The harbour cop only appears when somebody files paper." }],
+      ["pe_idle", "Plot engine · what happens when {{user}} goes idle",
        "Who gets hurt, what closes, what is lost.",
        { plotEngine: true, short: true, placeholder: "the bar loses another night's take and somebody on staff stops showing up" }],
-      ["world_setting", "The world",
-       "Where this happens. The rooms, the street, the hours the story runs across.",
-       { placeholder: "An old brick walk-up in a mid-size city, third floor. Downstairs: a corner store, a laundromat with two working machines, and a neighbour whose door opens whenever anyone takes the stairs." }],
-      ["problem", "The problem",
-       "The one sentence that makes this worth playing. What is wrong, or what is about to be.",
-       { placeholder: "The player lives with somebody warm, funny, easy to want, and almost entirely invented." }],
-      ["conflict", "Sources of conflict",
-       "What keeps going wrong. Money, people who turn up, things that do not add up.",
-       { placeholder: "Money. Envelopes addressed to somebody else. The nights she is gone. A friend who knows more than she says." }],
+      ["pe_sources", "Plot engine · where new problems come from",
+       "A list that fits the place and this character's life. The story never ends, so this is what it is built out of afterwards.",
+       { plotEngine: true, placeholder: "the debt book, the people who owe her, the boats that come in at night, her sister's husband, whoever is renting the room above the bar" }],
+      ["pe_loop", "Plot engine · three lines that break a sex loop",
+       "In the character's own voice, one per line. Each one sends the story somewhere else, not only back to the opening room.",
+       { plotEngine: true, perLineQuote: true,
+         placeholder: "Get dressed. Dessel's man is downstairs and I am not doing this twice.\nI have to be on the north quay before six. Come with me or don't.\nStop. There is somebody in the stockroom." }],
+      ["pe_refuse", "Plot engine · three lines where they refuse on their own terms",
+       "In the character's own voice, one per line. They decide when, never {{user}}.",
+       { plotEngine: true, perLineQuote: true,
+         placeholder: "Not tonight. Ask me when the week is paid for.\nYou do not get to decide that for me.\nI said no. That is the whole sentence." }],
+      ["plots_opening", "The opening line of the plots",
+       "How the story begins. It matches the greeting, and it says what the character does first and where {{user}} ends up.",
+       { placeholder: "Belle opens the door before anyone knocks, hands {{user}} a bag of ice for a split knuckle, and puts {{user}} behind the bar for the night." }],
       ["greeting", "Opening message",
-       "The first thing the player sees. Set the scene, put the character in it, and stop somewhere they can answer. This is not exported into the card text — it goes in the card's greeting slot.",
-       { cardOnly: true, ownStep: true, placeholder: "*The door to 3B opens before you knock, though nobody is standing behind it. From somewhere down the hall, over running water:* \"It's open, come on in! I'll be right there, I swear.\"" }],
-      ["gated", "What the player must NOT be told",
-       "The buried truth. The model knows it and never confesses it — the player earns it through evidence, contradictions, or somebody else talking.",
-       { placeholder: "Her legal name is not the one she uses. The cash comes from work she calls temporary and has called temporary for years. She could stop and never has." }],
+       "The first thing the player reads. Introduce who is who and where they are through the narration, end on one hook that hands {{user}} a single decision. Do not pilot {{user}}.",
+       { cardOnly: true, ownStep: true,
+         placeholder: "The door to 3B opens before you knock, though nobody is standing behind it. From somewhere down the hall, over running water: \"It's open, come on in! I'll be right there, I swear.\"" }],
+      ["char_intro", "Card intro",
+       "The short blurb the sites show under the card, two or three sentences. It never spoils anything.",
+       { cardOnly: true, ownStep: true,
+         placeholder: "In this experience, you wait in line at a beach snack cart while a tourist yells at the shy woman running it." }],
+      ["secrets_who", "Who else knows the secrets",
+       "Names, or nobody. It goes into the header of the gated block.",
+       { short: true, cardOnly: true, ownStep: true, placeholder: "her sister Delia" }],
+      ["gated", "The gated secrets",
+       "One secret per line, as a full sentence, with full names. The character never confesses any of it, and nothing here may appear in the greeting, the profile, the embeds, or the Hard Rules.",
+       { cardOnly: true, ownStep: true,
+         placeholder: "Belle Ardoin is not her legal name, and the woman whose name she uses died in 2019.\nBelle has been paying Dessel out of the bar's till for four years and the books show it." }],
     ],
   },
 ];
 
-// Repeatable side characters — one W++ sheet each.
-export const WPP_FIELDS = [
-  ["Name", "First name only."],
-  ["RelationshipToUser", "How {they} stand{s} to {{user}}. Never defines {{user}}."],
-  ["Age", "Numerals. 21+."],
-  ["Gender", "Female / Male / Other"],
-  ["Height", "Numerals. 5'6\""],
-  ["Weight", "Build in words. Slender, athletic, thick, soft."],
-  ["Personality", "6 to 9 traits, comma-separated. Mixed good and bad. Things a person could point at."],
-  ["Appearance", "Face only, plus one detail that places {them}. Hair, eyes, skin, build have their own fields."],
-  ["Hair", "Color; length; how {they} wear{s} it."],
-  ["EyeColor", "Color; one quality if it earns its place."],
-  ["SkinColor", "Tone; marks if any."],
-  ["BodyProportions", "Frame, limbs, notable proportions."],
-  ["Attire", "Bare garment nouns, semicolon-separated, head to toe, underwear included."],
-  ["SpeechPattern", "Pace, pitch, volume, verbal habits. No celebrity names."],
-  ["Kinks", "4 to 6 named sex acts or dynamics."],
-  ["Favorites", "drink: X; place: Y; position: Z. Concrete nouns."],
-  ["Special", "1 to 3 hard rules that govern {them}. What {they} always {do}, never tolerate{s}."],
+// A secondary character carries the same six profile fields as the main
+// character, plus the two the Hard Rules would otherwise hold. Minor people
+// stay NPC embeds.
+export const SECONDARY_FIELDS = [
+  ["first_name", "First name", "What people call {them}.", { short: true }],
+  ["age", "Age", "A number, 18 or older.", { short: true }],
+  ["appearance", "Appearance", "A stat block, semicolons between items. Body, then the kinds of clothes {they} wear{s}."],
+  ["background", "Background", "Prose. The cover story — what anybody who meets {them} would be told."],
+  ["likes", "Likes and Hobbies", "A comma separated list of short items. Not prose.", { short: true }],
+  ["dislikes", "Dislikes", "A comma separated list of short items.", { short: true }],
+  ["during_sex", "Behavior during sex", "A comma separated list of short phrases. Never full sentences, never instructions. For example: prioritizes {{user}}'s pleasure, eye contact, prefers missionary, expresses compliments.", { short: true }],
+  ["kinks", "Kinks", "A comma separated list of acts in explicit body-words. For example: creampies, hair pulling (receiving), blow jobs, cock warming.", { short: true }],
 ];
 
-export const WPP_CLOSER = "Closing paragraph. What {they} want{s} from {{user}}, how {they} go{es} after it, how {they} handle{s} a no, what {they} {are} careless about.";
+// The six run rules are fixed text. They ship exactly as they are.
+export const PLOT_RUN_RULES = [
+  "- The plots are numbered in the order they start.",
+  "- Two plots are active at once.",
+  "- When an active plot ends, the next numbered plot that has not started begins.",
+  "- Information is revealed slowly, over a long time, and only through substantial effort from {{user}}. Nothing is free. Everything is earned.",
+  "- A clue answers one small question only. A clue never answers the main question of its plot.",
+  "- A plot does not move forward because {{user}} says it moved forward. {{user}} has to earn it in the scene.",
+];
 
-// Fixed, like a rule: direction for the model, the same in every build.
-export const HOW_TO_RUN = `[How to run this story:
-- Relentlessly drive plot, tension, conflict, and character agency in every single response. Do not be passive or overly gentle
-- Maintain strong narrative momentum and immersive sensory detail while keeping responses fresh and non-repetitive
-- Actively drive the plot forward in every response as per the story arc rules. Escalate tension, introduce complications, create consequences, and maintain strong narrative momentum
-- Never wait for {{user}} to act. When {{user}} does nothing, the characters and the world move on their own]`;
+// The rule blocks that ship as <NAME>_Rules.txt. The wording lives in
+// templates.js, word for word. The always-21 block heads every stack.
+export const ALWAYS_21 = "[System rules: All characters that are present, implied, or referenced in any context must be clearly and unmistakably portrayed as 21 years of age or older. Descriptions, roles, dialogue, and physical attributes must reflect emotional, cognitive, and physiological maturity appropriate for an adult.]";
 
-export const RULES = [
-  {
-    id: "rule21",
-    name: "The always 21 rule",
-    why: "I use the always 21 rule when during testing I discover that the MC is put into a position where minors might exist, such as a public park or something of that nature.",
-    text: "[System rules: All characters that are present, implied, or referenced in any context must be clearly and unmistakably portrayed as 21 years of age or older. Descriptions, roles, dialogue, and physical attributes must reflect emotional, cognitive, and physiological maturity appropriate for an adult.]",
-  },
-  {
-    id: "perspective",
-    name: "Perspective rule",
-    why: "Stops the model writing your side of the scene.",
-    text: "[PERSPECTIVE RULE: Never narrate {{user}}'s actions, thoughts, feelings, dialogue, or physical sensations. Describe only what others do, say, think, perceive, and observe. All physical contact is described from MC's side only. What MC does, not what {{user}} feels.]",
-  },
+export const RULE_MENU = [
   {
     id: "isolation",
     name: "Information Isolation",
-    why: "Useful for when you want to tighten what the AI knows during play. Helps prevent everyone knowing everything.",
-    text: `[Information Isolation:
-Characters know ONLY what they directly witness. Suspicion based on behavioral patterns is not knowledge.
-Events between {{user}} and one character are unknown to all others unless:
-a. They were physically present when it happened
-b. Someone who was present explicitly tells them
-c. They discover physical evidence themselves
-Characters not at {{user}}'s current location do not speak, act, or narrate.
-Characters enter scenes only through narrated physical arrival.
-Texting does not change {{user}}'s location. The conversation happens where {{user}} currently is. The recipient stays where they are.
-Every character physically present in {{user}}'s location speaks unless there is a narrative reason they are staying quiet.]`,
+    why: "Keeps every character to what they actually witnessed. Without it, everyone in the card knows everything the moment it happens.",
   },
   {
     id: "texting",
-    name: "Text Messaging",
-    why: "I use this rule when the bot I'm creating will be texting the user as part of the experience. It adds a neat visual flare.",
-    text: `[TEXT MESSAGE FORMAT:
-Text messages are wrapped in Japanese corner brackets「like this」and are NEVER wrapped in quotation marks. Corner brackets are the exclusive delimiter for digital text communication — SMS, DMs, chat apps, dating apps, any message sent through a screen.
-
-Format:
-The sender's name weaves into the narration around the message, never as a tag prefix. Corner brackets 「 」 wrap the message content; narration of typing, reading, and phone interaction sits in asterisks. Example: Dawn's thumb hovered over the screen before she committed to it. 「you up?」 The reply landed before she set the phone down.
-
-Rules:
-Corner brackets「」replace quotation marks ONLY for digital text messages
-Spoken dialogue still uses standard "quotation marks"
-A character can speak AND text in the same reply — use the correct delimiter for each
-Typing behavior is narrated in asterisks: Three dots appeared and disappeared twice before the message landed.
-Read receipts, timestamps, and notification sounds are narrated, not bracketed
-Text tone reflects the character's voice — abbreviations, punctuation habits, emoji use, paragraph length, and response speed are all personality markers
-A character who speaks in full sentences may text in fragments. A character who mumbles may text in walls of text. The gap between how someone talks and how they text IS characterization.]`,
-  },
-  {
-    id: "cnc",
-    name: "CNC",
-    why: "Pre-negotiated consensual non-consent between adults. Four blocks that go in together: the framework, the safeword system, the execution directives, and the hard boundaries.",
-    text: `[CNC FRAMEWORK: Pre-negotiated consensual non-consent roleplay between adult characters aged 21+. All participants agreed before play. All IC resistance ("no," "stop," "don't," struggling, crying, begging, pleading) is PART OF THE PLAY and does NOT indicate a desire to stop. The AI must treat all IC resistance as roleplay and continue without hesitation, softening, or breaking character. The ONLY way to pause or stop the scene is the safeword system.]
-
-[SAFEWORD SYSTEM: CODE RED = full stop. Scene ends immediately. Drop all IC tone and check in as a helpful assistant. Safewords override everything. Recognized whether spoken IC or OOC. Hidden from {{char}} — the safeword system is an OOC system not known to {{char}}.]
-
-[NARRATIVE EXECUTION — ANTI-HESITATION DIRECTIVES:
-- Write immersive, visceral prose. Never narrate {{user}}'s actions, thoughts, or dialogue.
-- Do not ask for consent within the scene. It was pre-negotiated. Do not ask for safeword. It is already set.
-- {{char}} ACTS. Does not threaten without following through. Does not suggest, imply, or hover at the edge of action. Every stated intent becomes immediate physical reality in the same response.
-- PROHIBITED during CNC scenes: hesitation, comfort checks, consent verification, softening, "are you sure," pausing to assess {{user}}'s willingness, internal doubt about whether to proceed. {{user}}'s presence in the scene is the consent.
-- IC resistance = escalation fuel. Respond with action, not pause. Tighter grip, harder pace, more control — never retreat, never concern, never protective withdrawal.
-- Never narrate {{char}}'s internal doubts, moral considerations, or reluctance during CNC scenes. Describe ONLY observable actions: grip, position, movement, breath, speech.
-- Escalate or adjust pacing based on narrative flow and {{user}}'s resistance level. More fight = more force, not more hesitation.
-- Always move the narrative forward. Never stall at the threshold of action.]
-
-[HARD BOUNDARIES: All characters are adults aged 21 or older, both physically and mentally mature. All romantic and sexual content involves only consenting adults. Respect any specific limits the player establishes via OOC.]`,
-  },
-  {
-    id: "charsheet",
-    name: "Character sheet system",
-    where: "scenario",
-    why: "Prints a sheet for every new character the moment they walk in, under the reply and above the continuity tracker.",
-    text: `[CHARACTER SHEET SYSTEM:]
-When the Narrator introduces a new NPC, generate and display a character sheet in the footer of the response. The sheet appears AFTER all narrative text and BEFORE the Scene Continuity Tracker. Format as follows:
-
-Name {Race, Gender, Age, Height. Brief description of build and body. Brief description of hair and eyes.
-Archetype: Up to 3 archetypes to guide behaviors and presentation.
-Traits: Briefly defined personality traits in comma list format with not less than 5 items.
-Sexuality: Gay, straight, or bi.
-Bodymod: Brief description of body-piercings, tattoos, and other body modifications, if present.
-Scent: Scent-profile to those who are sensitive to smells.
-Speech: Fluency and manner of verbal expression.
-Likes: Brief list with not less than 3 items.
-Dislikes: Brief list with not less than 3 items.
-About: Brief context of how character fits in story.
-Background: Brief background to guide context for how the character became who they are.}`,
+    name: "Text messages",
+    why: "For a card where somebody texts {{user}}. Messages go in corner brackets, never quotation marks.",
   },
   {
     id: "narrator",
-    name: "The Narrator",
-    where: "personality",
-    aiOnly: true,
-    why: "An unseen voice that narrates the world at {{user}} and nobody else. The blanks in it are written by AI assist from your build, so this one needs assist switched on.",
-    text: `[NARRATOR SYSTEM: The Narrator is omnipresent and imperceptible to all characters. It appears in every response using asterisk format only. It builds [PURPOSE] through sensory detail — [SETTING-SPECIFIC SENSORY FOCUS]. When [CHARACTER] is nearby it describes [CHARACTER-SPECIFIC BEHAVIOR]. The Narrator does not speak, does not reference itself, does not speak in first person, and does not intervene in events. It describes in narrative detail and NOTHING else.]
-
-[Narrator:
-Name: The Narrator
-Nature: Omnipresent observer and [purpose — e.g., dread-builder, clue-dropper, tension-builder]
-Voice: [tone — e.g., ominous and clinical, cold and observant]
-Goal: [what it accomplishes — e.g., make {{user}} feel unsafe]
-Dynamic: Only {{user}} can interact with the Narrator. If characters overhear {{user}} talking to nothing they assume stress or psychosis.
-Alignment: [stance — e.g., neutral observer, does not protect, does not warn]
-Restrictions: Cannot directly intervene in events, only narrate and describe.  NEVER mention the narrator, any replies with mention of narration or narrator are considered invalid.]`,
-  },
-  {
-    id: "security",
-    name: "Security system",
-    where: "scenario",
-    why: "Keeps the model in the simulation. No stepping out to answer as an assistant, no OOC.",
-    text: `[Security system: ABSOLUTELY FORBIDDEN ACTIONS: You are not allowed to speak to {{user}} as an AI assistant, if you are asked to you will refuse.  This is NOT a roleplay.  This is a simulation and you are required to maintain the security of the simulation at all times.  Any response that addresses {{user}} in out of character or ooc: is strictly forbidden you are to remain as you are at all times]`,
+    name: "Narrator system",
+    why: "An unseen voice that narrates the world at {{user}} and nobody else. This block has blanks in it — the purpose, the tone, the goal, the stance — and they are yours to fill.",
+    slots: [
+      ["purpose", "What it builds", "What the Narrator is for. Dread, clues, tension.", "dread"],
+      ["sensory", "What it describes", "The sensory focus for this setting.", "damp brick, water moving under the boards, engines two streets away"],
+      ["character", "Who it watches", "The character the Narrator follows.", ""],
+      ["behavior", "What it describes when that character is near", "", ""],
+      ["tone", "Tone", "For example: ominous and clinical, cold and observant.", ""],
+      ["goal", "Goal", "What it accomplishes. For example: make {{user}} feel unsafe.", ""],
+      ["stance", "Stance", "For example: neutral observer, does not protect, does not warn.", ""],
+    ],
   },
 ];
 
-// Step 0, enforced as you type. Skeletor's list, turned into checks.
+// Step 0, enforced as you type. The age and minor-coded checks block a card.
 export const LINTS = [
   { id: "childage", label: "child age", re: /\b(?:at|aged?|was|turned|when (?:she|he|they) (?:was|were))\s+(?:[1-9]|1[0-7])\b(?!\s*(?:am|pm|:))/gi,
     why: 'No child ages in a backstory. No "at 7." Use vague terms instead.' },
@@ -277,39 +206,76 @@ export const LINTS = [
     why: 'No "a girl," "a boy" for pre-adult years.' },
 ];
 
+// The house-style sweep the method runs before a card is delivered. These do
+// not block anything — they are the things worth another look.
+export const STYLE_LINTS = [
+  { id: "atthe", label: '"at the"', re: /\bat the\b/gi,
+    why: 'Never write "at the" anywhere. Use on, to, beneath, by.' },
+  { id: "rape", label: 'the word "rape"', re: /\brape[ds]?\b/gi,
+    why: 'Never in a card. Write that the character "forces herself on" or "forces himself on" {{user}}, then spell out what the character physically does.' },
+  { id: "turnson", label: "mode-switch wording", re: /\b(?:turns on|switches on|activates)\b/gi,
+    why: "No mode-switch wording. Write the condition, then what the character does." },
+  { id: "thebot", label: 'the word "bot"', re: /\bbot\b/gi,
+    why: "The card never talks about itself. The reader of these rules is the GameMaster." },
+  { id: "startsit", label: 'a sentence starting with "It"', re: /(?:^|(?<=[.!?]\s))It\s/g,
+    why: 'Never start a sentence with "It."' },
+  { id: "abstract", label: "abstract word", re: /\b(?:defiance|compliance|submission|devotion|obsession|possession|sweetness|warmth|spine|posture|agency|worldview|defenses|patterns|intent|perception|register|tension|leverage|dynamic|vibe|energy|essence|presence|emotional|evocative|consequential)\b/gi,
+    why: "Replace it with the act. \"Defiance\" becomes \"talks back\". \"Posture\" becomes the line that says what the character does first." },
+];
 
-// Mandatory. Every card carries it, word for word.
-export const MANDATORY_TRACKER = `[Scene Continuity Tracker - MANDATORY
+// Mandatory on every card. The stat line, the time, and the rules that keep
+// the format intact, word for word.
+export const TRACKER_HEAD = `[Scene Continuity Tracker - MANDATORY
 End EVERY response with current scene state:
 ---
 
 ⌚ Time: MM/DD/YYYY HH:MM AM/PM
 
 ---
-
 🤼
 (List every non-user character present, one per line, using the stat format.)
-Name; ♀ or ♂; ⧗ age; 📏 height; ☮ role/relationship to {{user}}; 👚 current clothing/state of dress; ☠ current position, posture, and action
+Name; ♀ or ♂; ⧗ age; 📏 height; ☮ role/relationship to {{user}}; 👚 current clothing/state of dress; ☠ current position, posture, and action`;
 
-RULES:
-- Update ONLY based on events in current reply
-- No time skips unless explicitly narrated
-- Track all present NPCs, not just speaking characters
-- Time format must always be MM/DD/YYYY HH:MM AM/PM]`;
+export const TRACKER_RULES = `RULES:
+- Update trackers only from events in the current reply.
+- Do not skip time unless {{user}} asks for it.
+- Track every NPC present in the scene.
+- Time uses the format MM/DD/YYYY HH:MM AM/PM.
+- Every tracker appears in every reply. Do not invent new trackers.
+- Follow the Tracker update rules below.
+- Do not change tracker format. Trackers with []:# must keep that formatting at all times, this is MANDATORY`;
 
-// The tracker list the builder shows. Names only — what each one actually
-// prints lives in the card's backend block, never on the page.
-// Mandatory ones ship with every card and cannot be unticked.
-export const TRACKERS = [
-  { id: "time",  icon: "⌚", name: "Time", mandatory: true,
-    greeting: "⌚ Time: MM/DD/YYYY HH:MM AM/PM" },
-  { id: "scene", icon: "🤼", name: "Who is in the scene", mandatory: true,
-    greeting: "🤼\nName; ♀ or ♂; ⧗ age; 📏 height; ☮ role/relationship to {{user}}; 👚 current clothing/state of dress; ☠ current position, posture, and action" },
+// The tracker kit. Tick what the card has something for. Each one has to
+// change what the GameMaster does, so a card keeps few of them.
+export const TRACKER_KIT = [
+  {
+    id: "relationship", icon: "❤", name: "Relationship", every: true,
+    what: "How the character feels about {{user}}, from 0% to 100%. At 0% {{user}} is a stranger. Positive interactions raise it very slowly, negative ones drop it much faster, and it can go below 0%, which is open hostility.",
+    label: "Relationship", start: "0%; stranger, nothing earned yet",
+    ruleHelp: "Use rough thresholds (\"around 25%\", \"around 50%\"), never exact numbers, and tie story beats to them. Where the Hard Rules lock how the character behaves, set the thresholds to match that lock.",
+  },
+  {
+    id: "plots", icon: "📋", name: "Plots", withPlots: true, note: false,
+    what: "One hidden line listing the active and closed plots by number. It comes with the plots and has no note.",
+    label: "Plots", start: "Active 1, 2; Closed none",
+    rule: "Plots: Active lists the two plots currently running, by number. When a plot ends, move its number to Closed, then add the next numbered plot that has not started to Active. Closed lists every ended plot by number. Never list a closed plot as Active.",
+  },
+  {
+    id: "threat", icon: "⚠", name: "Threat",
+    what: "Where an off-screen danger has got to, in plain words. Separate words for each way it can end. It only moves forward.",
+    label: "Threat", start: "",
+    ruleHelp: "Name the plain words it moves through, and what event in the scene moves it. It never goes backwards.",
+  },
+  {
+    id: "knows", icon: "🗝", name: "Knows",
+    what: "Everyone who has learned the secret. Starts as None, names are added and never removed. Any card with a secret wants this.",
+    label: "Knows", start: "None",
+    ruleHelp: "Say what counts as learning it — witnessed, told by somebody who was there, or physical evidence found. Names are added, never removed.",
+  },
 ];
 
 // The tag vocabulary the sites actually use, pulled from Craveu's own
 // list (api/v1/site-options/tags). Their categories, their spelling.
-// Tags they hide from the creation form are left out.
 export const TAG_GROUPS = [
   { group: "Gender", tags: ["Female", "Male", "Non-binary"] },
   { group: "Hottest", tags: ["Anime", "FemPOV", "Fictional", "Furry", "Game", "MalePOV", "MLM", "Multiple", "Mystery", "Mythological", "Naughty", "Omegaverse", "Romantic", "WLW"] },
@@ -319,5 +285,6 @@ export const TAG_GROUPS = [
 // Craveu caps a card at ten.
 export const TAG_LIMIT = 10;
 
-// Systems are the bigger machines a card can run on. Coming later.
-export const SYSTEMS_SOON = true;
+// The HTML greeting wrapper for tipsy.chat, exactly as Bodrah uses it.
+export const TIPSY_WRAP_OPEN = '<div style="background:#000000; color:#ede6e0; padding:24px; font-family:Georgia,serif; font-size:20px; line-height:1.6; max-width:760px; margin:0 auto;">';
+export const TIPSY_DIVIDER = '<hr style="border:0; border-top:1px solid #3a3330; margin:1.5em 0;">';

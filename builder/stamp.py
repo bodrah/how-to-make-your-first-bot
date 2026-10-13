@@ -11,7 +11,8 @@ cached copy of a file that had in fact changed.
 import re, hashlib, pathlib
 
 root = pathlib.Path(__file__).parent
-FILES = ("app.js", "ai.js", "fields.js", "png.js", "master-prompt.js", "style.css")
+FILES = ("app.js", "ai.js", "fields.js", "hardrules.js", "templates.js",
+         "png.js", "zip.js", "master-prompt.js", "style.css")
 
 
 def version():
@@ -32,7 +33,7 @@ html = re.sub(r'(src="app\.js)(\?v=[^"]*)?"', rf'\1{stamp}"', html)
 html = re.sub(r'(href="style\.css)(\?v=[^"]*)?"', rf'\1{stamp}"', html)
 (root / "index.html").write_text(html)
 
-for name in ("app.js", "ai.js"):
+for name in ("app.js", "ai.js", "hardrules.js"):
     path = root / name
     text = path.read_text()
     text = re.sub(r'(from "\./[a-z-]+\.js)(\?v=[^"]*)?"', rf'\1{stamp}"', text)

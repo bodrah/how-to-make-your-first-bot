@@ -1,7 +1,7 @@
 // Bring-your-own-key calls, straight from the browser to the vendor.
 // Every vendor here was checked to allow browser (CORS) requests; the key never
 // touches any server of ours, because there isn't one.
-import { MASTER_PROMPT, SINGLE_FIELD_SUFFIX } from "./master-prompt.js?v=264d0f6d";
+import { MASTER_PROMPT } from "./master-prompt.js?v=f76ff3c9";
 
 export const VENDORS = {
   anthropic: {
@@ -222,27 +222,16 @@ function readChoice(data) {
   return (choice.message || {}).content || "";
 }
 
-export function parseReply(text) {
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  const raw = fenced ? fenced[1] : text;
-  const start = raw.indexOf("{");
-  const end = raw.lastIndexOf("}");
-  if (start === -1 || end === -1) throw new Error("The model did not return JSON.");
-  const parsed = JSON.parse(raw.slice(start, end + 1));
-  if (!parsed.fields || typeof parsed.fields !== "object") throw new Error("The model's JSON had no fields.");
-  return parsed;
-}
-
-export function buildFileRequest({ file, lore, context, instruction }) {
+export function buildFileRequest({ file, lore, context, blanks, instruction }) {
   const user = [
-    "Here is the export file this builder produced from everything the author filled in. It is exactly the file they are about to download.",
+    "Here is the card this builder has assembled from everything the author filled in so far. The fixed lines in it come from the method's templates and are not yours to change.",
     "```\n" + file + "\n```",
-    lore ? `THE AUTHOR'S LORE — plain English notes that are NOT in the file. This is the raw material behind the card. Use it; do not paste it back verbatim.\n${lore}` : "",
+    lore ? `THE AUTHOR'S LORE — plain English notes that are NOT in the card. This is the raw material behind it. Use it; never paste it back word for word.\n${lore}` : "",
     ...(context || []),
+    blanks || "",
     instruction ? `WHAT THE AUTHOR ASKED FOR:\n${instruction}` : "",
-    "SEND BACK THE SAME FILE. Same header, same FIELD 1 to FIELD 4 banners, same labels, same brackets, same fixed blocks, same order. Change only the words inside each field's value: fill what is empty, sharpen what is thin, leave alone what is already good. Any line reading [nothing written yet] is yours to write. Return the file and nothing else — no explanation before or after, no code fence.",
+    "ANSWER WITH KEY LINES ONLY. One line per answer, in the form `key: your writing`, using the keys exactly as the BLANKS sheet spells them. A value that needs several lines keeps them all under its own key. You may also return a key that is already written if your version is genuinely better — the author sees both and picks. No preamble, no explanation, no code fence, no headers, nothing but key lines.",
   ].filter(Boolean).join("\n\n");
 
   return { system: MASTER_PROMPT, user };
 }
-

@@ -54,7 +54,6 @@ export function embedCard(pngBytes, card) {
   const view = new DataView(pngBytes.buffer, pngBytes.byteOffset, pngBytes.byteLength);
   const out = [pngBytes.slice(0, 8)];                       // signature
   const json = JSON.stringify(card);
-  const v2 = { ...card, spec: "chara_card_v2", spec_version: "2.0" };
 
   let offset = 8;
   let wrote = false;
@@ -69,8 +68,9 @@ export function embedCard(pngBytes, card) {
       if (keyword === "chara" || keyword === "ccv3") { offset += 12 + length; continue; }
     }
     if (type === "IEND" && !wrote) {
-      out.push(textChunk("chara", toBase64(JSON.stringify(v2))));   // what older tools read
-      out.push(textChunk("ccv3", toBase64(json)));                  // the current spec
+      // One flat card in one chunk. The method is explicit: no second
+      // wrapped copy goes in beside it.
+      out.push(textChunk("chara", toBase64(json)));
       wrote = true;
     }
     out.push(whole);

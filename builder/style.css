@@ -376,3 +376,33 @@ button.mini.on { background: var(--acid); border-color: var(--acid); color: #052
 .pill.status-problem         { border-color: var(--warn); background: rgba(255,93,122,.10); }
 .pill.status-problem .pillcount { color: var(--warn); }
 .pill.on { border-color: var(--violet); background: var(--violet-soft); box-shadow: 0 0 0 1px var(--violet) inset; }
+
+/* ------------------------------------------------ picking the templates */
+.pickwrap { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .6rem; }
+.pickcard {
+  display: flex; gap: .6rem; align-items: flex-start;
+  border: 1px solid var(--line); border-radius: 8px; padding: .65rem .75rem;
+  background: rgba(255,255,255,.02); cursor: pointer;
+}
+.pickcard:hover { border-color: var(--violet); }
+.pickcard.on { border-color: var(--acid); background: rgba(110,231,160,.08); }
+.pickcard input { margin-top: .2rem; }
+.picktext { display: flex; flex-direction: column; gap: .15rem; }
+.picktext strong { font-size: .98rem; }
+.picktext span { color: var(--dim); font-size: .84rem; line-height: 1.35; }
+
+/* ------------------------------------------- the line a blank sits inside */
+.slotline {
+  margin: .1rem 0 .35rem; padding: .4rem .6rem;
+  border-left: 3px solid var(--line); background: rgba(255,255,255,.03);
+  color: var(--dim); font-size: .84rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  border-radius: 0 6px 6px 0; white-space: pre-wrap;
+}
+.hardedit { min-height: 30rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .82rem; }
+
+/* A house-style note is worth a look, not a blocker, so it reads quieter. */
+.lint.soft {
+  border-left-color: var(--amber); background: rgba(232,181,58,.08); color: #f4e3bb;
+}
+.lint.soft strong { color: var(--amber); }
+h4.castheading { font-size: .98rem; margin-top: 1rem; }
